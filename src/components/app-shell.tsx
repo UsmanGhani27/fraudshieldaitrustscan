@@ -1,6 +1,8 @@
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { LayoutDashboard, ScanSearch, History, FileText, Settings, LogOut, CreditCard, Menu, X } from "lucide-react";
+import { LayoutDashboard, ScanSearch, History, FileText, Settings, LogOut, CreditCard, Menu, X, Bell, LifeBuoy } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { alertsQuery } from "@/lib/queries";
 import { useState } from "react";
 import { Logo } from "./brand";
 import { UsageMeter } from "./usage";
@@ -8,17 +10,26 @@ import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/analyze", label: "Analyze", icon: ScanSearch },
   { to: "/history", label: "History", icon: History },
   { to: "/reports", label: "Reports", icon: FileText },
+  { to: "/alerts", label: "Alerts", icon: Bell },
   { to: "/settings", label: "Settings", icon: Settings },
+  { to: "/help", label: "Help", icon: LifeBuoy },
 ] as const;
 
+const MOBILE_NAV = [NAV[0], NAV[1], NAV[2], NAV[3], NAV[4]] as const;
+
+function useUnread() {
+  const { data } = useQuery(alertsQuery());
+  return (data ?? []).filter((a) => !a.read_at).length;
+}
+
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+  const unread = useUnread();
   return (
     <nav className="space-y-1" aria-label="App">
       {NAV.map(({ to, label, icon: Icon }) => (
@@ -31,6 +42,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         >
           <Icon className="size-4" aria-hidden />
           {label}
+          {to === "/alerts" && unread > 0 && <span className="ml-auto rounded-full bg-risk-critical px-1.5 font-mono text-[10px] text-primary-foreground" aria-label={`${unread} unread`}>{unread}</span>}
         </Link>
       ))}
     </nav>
@@ -43,7 +55,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const name = (user?.user_metadata?.full_name as string | undefined) || user?.email || "Account";
+  const name = (user?.user_metadata?.["full_name"] as string | undefined) || user?.email || "Account";
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -99,8 +111,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           </div>
         </header>
-        <main className={cn("mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8")}>{children}</main>
+        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 pb-24 pt-6 md:px-6 md:py-8 lg:pb-8">{children}</main>
       </div>
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-border bg-background/95 backdrop-blur lg:hidden" aria-label="Mobile">
+        {MOBILE_NAV.map(({ to, label, icon: Icon }) => (
+          <Link key={to} to={to} className="flex flex-col items-center gap-0.5 py-2 text-[11px] text-muted-foreground" activeProps={{ className: "!text-primary" }}>
+            <Icon className="size-5" aria-hidden />{label}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }
