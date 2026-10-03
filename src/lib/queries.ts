@@ -7,7 +7,7 @@ export const analysesListQuery = () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("analyses")
-        .select("id, title, input_type, risk_level, risk_score, confidence, summary, is_saved, provider, created_at, analysis_categories(category)")
+        .select("id, title, input_type, risk_level, risk_score, confidence, summary, is_saved, provider, primary_threat, verification_status, created_at, analysis_categories(category)")
         .order("created_at", { ascending: false })
         .limit(500);
       if (error) throw error;
@@ -54,5 +54,30 @@ export const profileQuery = (userId: string) =>
         supabase.from("subscriptions").select("*").eq("user_id", userId).maybeSingle(),
       ]);
       return { profile: p.data, prefs: prefs.data, subscription: sub.data };
+    },
+  });
+
+export const alertsQuery = () =>
+  queryOptions({
+    queryKey: ["alerts"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("alerts").select("*").order("created_at", { ascending: false }).limit(100);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 30_000,
+  });
+
+export const evidenceQuery = () =>
+  queryOptions({
+    queryKey: ["evidence"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("analyses")
+        .select("id, title, input_type, risk_level, created_at, screenshot_storage_path")
+        .not("screenshot_storage_path", "is", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
     },
   });
