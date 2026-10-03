@@ -21,7 +21,7 @@ export const analysisDetailQuery = (id: string) =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("analyses")
-        .select("*, analysis_categories(category), analysis_signals(id, title, severity, evidence, explanation), analysis_actions(id, action_text, sort_order), verification_steps(id, step_text, sort_order)")
+        .select("*, analysis_categories(category), analysis_signals(id, title, severity, evidence, explanation), analysis_actions(id, action_text, action_type, sort_order), verification_steps(id, step_text, sort_order)")
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;

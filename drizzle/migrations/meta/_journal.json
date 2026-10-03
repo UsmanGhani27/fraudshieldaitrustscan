@@ -15,6 +15,13 @@
       "when": 1791061744405,
       "tag": "0001_refinement_alerts_details",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791062666260,
+      "tag": "0002_harden_function_grants",
+      "breakpoints": true
     }
   ]
 }

@@ -16,6 +16,7 @@ import { profileQuery } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteAllData } from "@/lib/analysis.functions";
 import { PLANNED_INTEGRATIONS } from "@/lib/providers/types";
+import { PLAN_HISTORY_DAYS, type PlanCode } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/settings")({
   head: () => ({ meta: [{ title: "Settings — FraudShield AI" }, { name: "description", content: "Profile, privacy and account settings." }] }),
@@ -52,7 +53,7 @@ function Settings() {
     setSaving(true);
     const { error } = await supabase.from("profiles").update({ full_name: name.trim().slice(0, 80) || null }).eq("id", user.id);
     setSaving(false);
-    if (error) return toast.error("Couldn't save your profile.");
+    if (error) { toast.error("Couldn't save your profile."); return; }
     toast.success("Profile saved");
     refresh();
   };
@@ -60,7 +61,7 @@ function Settings() {
   const updatePrefs = async (patch: { history_enabled?: boolean; retention_days?: number | null }) => {
     if (!user) return;
     const { error } = await supabase.from("data_preferences").update(patch).eq("user_id", user.id);
-    if (error) return toast.error("Couldn't update preferences.");
+    if (error) { toast.error("Couldn't update preferences."); return; }
     toast.success("Privacy preferences updated");
     refresh();
   };
@@ -102,7 +103,7 @@ function Settings() {
             <Switch id="hist" checked={prefs?.history_enabled ?? true} disabled={!prefs} onCheckedChange={(v) => updatePrefs({ history_enabled: v })} />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <div><p className="text-sm font-medium">Automatic deletion</p><p className="mt-1 text-sm text-muted-foreground">Analyses older than this are removed automatically.</p></div>
+            <div><p className="text-sm font-medium">Automatic deletion</p><p className="mt-1 text-sm text-muted-foreground">Analyses (and their evidence) older than this are removed automatically.{PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode] ? ` Your plan keeps history for up to ${PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode]} days.` : ""}</p></div>
             <Select value={prefs?.retention_days ? String(prefs.retention_days) : "never"} disabled={!prefs} onValueChange={(v) => updatePrefs({ retention_days: v === "never" ? null : Number(v) })}>
               <SelectTrigger className="w-48" aria-label="Retention period"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -117,7 +118,7 @@ function Settings() {
         </div>
       </Card>
 
-      <Card title="Integrations" description="Optional future connections. None are active in this MVP.">
+      <Card title="Integrations" description="Optional future connections. None are connected — FraudShield works fully without them.">
         <ul className="grid gap-3 md:grid-cols-3">
           {PLANNED_INTEGRATIONS.map((i) => (
             <li key={i.id} className="rounded-lg border border-border bg-surface-2/50 p-4">
@@ -136,7 +137,7 @@ function Settings() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete all analysis data?</AlertDialogTitle>
-                <AlertDialogDescription>This permanently removes all your analyses, signals, reports and stored screenshots. Your account and this month's usage count remain. This can't be undone.</AlertDialogDescription>
+                <AlertDialogDescription>This permanently removes all your analyses, signals, reports, alerts and stored evidence. Your account and this month's usage count remain. This can't be undone.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={deleteAll}>Delete everything</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>

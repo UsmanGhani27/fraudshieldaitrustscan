@@ -22,6 +22,7 @@ function HistoryPage() {
   const [type, setType] = useState("all");
   const [cat, setCat] = useState("all");
   const [savedOnly, setSavedOnly] = useState(false);
+  const [sort, setSort] = useState("newest");
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -31,8 +32,8 @@ function HistoryPage() {
       (cat === "all" || a.analysis_categories.some((c) => c.category === cat)) &&
       (!savedOnly || a.is_saved) &&
       (!term || a.title.toLowerCase().includes(term) || a.summary.toLowerCase().includes(term)),
-    );
-  }, [data, q, risk, type, cat, savedOnly]);
+    ).sort((a, b) => sort === "oldest" ? a.created_at.localeCompare(b.created_at) : sort === "risk" ? b.risk_score - a.risk_score : b.created_at.localeCompare(a.created_at));
+  }, [data, q, risk, type, cat, savedOnly, sort]);
 
   return (
     <div>
@@ -41,11 +42,12 @@ function HistoryPage() {
         <EmptyState icon={HistoryIcon} title="No history yet" description="Your analyses will appear here. If history is turned off in Settings, results are still kept but raw content isn't stored." action={<Button asChild variant="hero"><Link to="/analyze">Start an analysis</Link></Button>} />
       ) : (
         <>
-          <div className="mb-4 grid gap-2 md:grid-cols-[1fr_repeat(3,160px)_auto]">
+          <div className="mb-4 grid gap-2 md:grid-cols-[1fr_repeat(4,150px)_auto]">
             <div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Search history" placeholder="Search title or summary" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" /></div>
             <Select value={risk} onValueChange={setRisk}><SelectTrigger aria-label="Filter by risk"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All risk levels</SelectItem>{Object.entries(RISK_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
             <Select value={type} onValueChange={setType}><SelectTrigger aria-label="Filter by type"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All types</SelectItem>{Object.entries(INPUT_LABEL).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
             <Select value={cat} onValueChange={setCat}><SelectTrigger aria-label="Filter by category"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All categories</SelectItem>{THREAT_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{CATEGORY_INFO[c].label}</SelectItem>)}</SelectContent></Select>
+            <Select value={sort} onValueChange={setSort}><SelectTrigger aria-label="Sort"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="newest">Newest first</SelectItem><SelectItem value="oldest">Oldest first</SelectItem><SelectItem value="risk">Highest risk</SelectItem></SelectContent></Select>
             <Button variant={savedOnly ? "secondary" : "outline"} onClick={() => setSavedOnly(!savedOnly)} aria-pressed={savedOnly}>Saved only</Button>
           </div>
           {isLoading ? (
