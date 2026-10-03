@@ -5,10 +5,10 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { ShieldCheck, ScanSearch, AlertOctagon, Activity, MessageSquareText, Link2, Image, Mail, Lightbulb, ArrowRight } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { useUsage } from "@/components/usage";
-import { RiskBadge } from "@/components/brand";
+import { AnalysisList } from "@/components/analysis-list";
 import { Button } from "@/components/ui/button";
 import { analysesListQuery } from "@/lib/queries";
-import { INPUT_LABEL, type InputType, type RiskLevel } from "@/lib/risk";
+import { INPUT_LABEL, type InputType } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — FraudShield AI" }, { name: "description", content: "Your protection overview and recent analyses." }] }),
@@ -121,24 +121,5 @@ function Dashboard() {
         )}
       </div>
     </div>
-  );
-}
-
-export function AnalysisList({ items }: { items: { id: string; title: string; input_type: string; risk_level: string; risk_score: number; created_at: string }[] }) {
-  return (
-    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
-      {items.map((a) => (
-        <li key={a.id}>
-          <Link to="/analysis/$id" params={{ id: a.id }} className="flex items-center gap-4 px-4 py-3 transition-colors hover:bg-surface-2">
-            <RiskBadge level={a.risk_level as RiskLevel} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{a.title}</p>
-              <p className="text-xs text-muted-foreground">{INPUT_LABEL[a.input_type as InputType]} · {new Date(a.created_at).toLocaleString()}</p>
-            </div>
-            <span className="font-mono text-sm text-muted-foreground">{a.risk_score}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
   );
 }
