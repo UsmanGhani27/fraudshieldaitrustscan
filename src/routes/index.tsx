@@ -18,7 +18,7 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
-export const SAMPLE_RESULT: ResultData = {
+const SAMPLE_RESULT: ResultData = {
   risk_level: "critical",
   risk_score: 88,
   confidence: 82,
