@@ -68,6 +68,29 @@ export const PLAN_LIMITS: Record<PlanCode, number> = {
   team: 2000,
 };
 
+/** Max history retention (days) per plan. null = no plan cap. */
+export const PLAN_HISTORY_DAYS: Record<PlanCode, number | null> = { free: 7, personal: 30, pro: 365, team: 365 };
+
+/** Analyzer types included per plan. */
+export const PLAN_ANALYZERS: Record<PlanCode, InputType[]> = {
+  free: ["message", "email", "url"],
+  personal: ["message", "email", "url", "screenshot"],
+  pro: ["message", "email", "url", "screenshot", "qr"],
+  team: ["message", "email", "url", "screenshot", "qr"],
+};
+
+/**
+ * Hackathon preview: when true, every analyzer is unlocked on every plan (usage limits still apply).
+ * Shown transparently in the UI. Flip to false when billing launches.
+ */
+export const PREVIEW_UNLOCK_ANALYZERS = true;
+
+export function analyzerAllowed(plan: PlanCode, type: InputType) {
+  return PREVIEW_UNLOCK_ANALYZERS || PLAN_ANALYZERS[plan].includes(type);
+}
+
+export const USAGE_WARN_RATIO = 0.8;
+
 export const INPUT_LABEL: Record<InputType, string> = {
   message: "Message",
   email: "Email",
@@ -78,5 +101,6 @@ export const INPUT_LABEL: Record<InputType, string> = {
 
 export const RATE_LIMIT_PER_MINUTE = 5;
 export const MAX_TEXT_LENGTH = 8000;
+export const MIN_TEXT_LENGTH = 8;
 export const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
 export const ALLOWED_IMAGE_MIME = ["image/png", "image/jpeg", "image/webp"] as const;

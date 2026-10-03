@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { FileText, Trash2 } from "lucide-react";
 import { PageHeader, EmptyState } from "@/components/app-shell";
 import { RiskBadge } from "@/components/brand";
+import { ReportsTabs } from "@/components/reports-tabs";
 import { Button } from "@/components/ui/button";
 import { reportsQuery } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,13 +20,14 @@ function ReportsPage() {
   const qc = useQueryClient();
   const remove = async (id: string) => {
     const { error } = await supabase.from("reports").delete().eq("id", id);
-    if (error) return toast.error("Couldn't delete the report.");
+    if (error) { toast.error("Couldn't delete the report."); return; }
     qc.invalidateQueries({ queryKey: ["reports"] });
     toast.success("Report deleted");
   };
   return (
     <div>
-      <PageHeader title="Saved reports" description="Printable security reports generated from your analyses." />
+      <PageHeader title="Reports & evidence" description="Printable security reports generated from your analyses." />
+      <ReportsTabs />
       {isLoading ? (
         <div className="space-y-2">{[0, 1].map((i) => <div key={i} className="h-16 animate-pulse rounded-xl bg-card" />)}</div>
       ) : !data?.length ? (

@@ -8,8 +8,9 @@ import { useAuth } from "@/hooks/use-auth";
 const NAV = [
   { to: "/", label: "Product" },
   { to: "/how-it-works", label: "How it Works" },
-  { to: "/safety", label: "Safety" },
+  { to: "/safety", label: "Security & Privacy" },
   { to: "/pricing", label: "Pricing" },
+  { to: "/faq", label: "FAQ" },
 ] as const;
 
 export function SiteHeader() {
@@ -65,7 +66,8 @@ export function SiteFooter() {
         <div className="flex flex-wrap gap-4">
           <Link to="/how-it-works" className="hover:text-foreground">How it Works</Link>
           <Link to="/pricing" className="hover:text-foreground">Pricing</Link>
-          <Link to="/safety" className="hover:text-foreground">Safety & Privacy</Link>
+          <Link to="/safety" className="hover:text-foreground">Security & Privacy</Link>
+          <Link to="/faq" className="hover:text-foreground">FAQ</Link>
         </div>
       </div>
     </footer>

@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          analysis_id: string | null
+          body: string
+          created_at: string
+          id: string
+          kind: string
+          read_at: string | null
+          severity: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          analysis_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          kind: string
+          read_at?: string | null
+          severity?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          analysis_id?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          read_at?: string | null
+          severity?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_analysis_id_fkey"
+            columns: ["analysis_id"]
+            isOneToOne: false
+            referencedRelation: "analyses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analyses: {
         Row: {
           analysis_version: string
@@ -21,12 +65,15 @@ export type Database = {
           claimed_identity: string | null
           confidence: number
           created_at: string
+          details: Json
+          evidence_deleted_at: string | null
           id: string
           input_type: Database["public"]["Enums"]["input_type"]
           is_saved: boolean
           model: string
           normalized_input_hash: string | null
           observed_indicators: Json
+          primary_threat: Database["public"]["Enums"]["threat_category"] | null
           provider: string
           raw_input_text: string | null
           risk_level: Database["public"]["Enums"]["risk_level"]
@@ -40,6 +87,7 @@ export type Database = {
           uncertainty_notes: Json
           updated_at: string
           user_id: string
+          verification_status: string
         }
         Insert: {
           analysis_version: string
@@ -47,12 +95,15 @@ export type Database = {
           claimed_identity?: string | null
           confidence: number
           created_at?: string
+          details?: Json
+          evidence_deleted_at?: string | null
           id?: string
           input_type: Database["public"]["Enums"]["input_type"]
           is_saved?: boolean
           model: string
           normalized_input_hash?: string | null
           observed_indicators?: Json
+          primary_threat?: Database["public"]["Enums"]["threat_category"] | null
           provider: string
           raw_input_text?: string | null
           risk_level: Database["public"]["Enums"]["risk_level"]
@@ -66,6 +117,7 @@ export type Database = {
           uncertainty_notes?: Json
           updated_at?: string
           user_id: string
+          verification_status?: string
         }
         Update: {
           analysis_version?: string
@@ -73,12 +125,15 @@ export type Database = {
           claimed_identity?: string | null
           confidence?: number
           created_at?: string
+          details?: Json
+          evidence_deleted_at?: string | null
           id?: string
           input_type?: Database["public"]["Enums"]["input_type"]
           is_saved?: boolean
           model?: string
           normalized_input_hash?: string | null
           observed_indicators?: Json
+          primary_threat?: Database["public"]["Enums"]["threat_category"] | null
           provider?: string
           raw_input_text?: string | null
           risk_level?: Database["public"]["Enums"]["risk_level"]
@@ -92,6 +147,7 @@ export type Database = {
           uncertainty_notes?: Json
           updated_at?: string
           user_id?: string
+          verification_status?: string
         }
         Relationships: []
       }
