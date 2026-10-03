@@ -22,20 +22,29 @@ const SAMPLE_RESULT: ResultData = {
   risk_level: "critical",
   risk_score: 88,
   confidence: 82,
-  summary: "This text claims to be from a parcel service but links to an unrelated domain and requests a small fee under time pressure — a common delivery-scam pattern.",
+  summary: "This text claims to be from a parcel service but links to an unrelated domain and asks for a small fee under time pressure — a common delivery-scam pattern.",
+  primary_threat: "delivery_scam",
   categories: ["delivery_scam", "phishing", "payment_scam"],
   claimed_identity: "ParcelPost Express",
-  observed_indicators: ["Link domain: parcelpost-redelivery.top", "Sender: unregistered mobile number", "Requested payment: $1.99 fee"],
+  observed_indicators: ["Link domain: parcelpost-redelivery.top"],
   signals: [
-    { title: "Domain does not match claimed brand", severity: "high", evidence: "parcelpost-redelivery.top", explanation: "The link isn't on the company's official domain." },
-    { title: "Urgency pressure", severity: "medium", evidence: "within 24 hours", explanation: "Deadlines push you to act before verifying." },
+    { title: "Domain doesn't match claimed brand", severity: "high", evidence: "parcelpost-redelivery.top", explanation: "The link isn't on the company's official website." },
+    { title: "Small unexpected fee", severity: "medium", evidence: "“customs fee of $1.99”", explanation: "Tiny fees are used to collect card details." },
+    { title: "Urgency pressure", severity: "medium", evidence: "“within 24 hours”", explanation: "Deadlines push you to act before verifying." },
   ],
-  actions: ["Don't open the link or pay the fee.", "Track the parcel in the carrier's official app.", "Report and delete the message."],
-  steps: ["Look up the official carrier website yourself", "Check your orders for an expected delivery", "Never enter card details from a text link"],
-  uncertainty: ["Synthetic example for illustration."],
+  tactics: ["Urgency", "Payment request"],
+  suspicious_entities: [],
+  verification: { status: "suspicious", claimed: "ParcelPost Express", observed_sender: "+1 (555) 010-0199", observed_domain: "parcelpost-redelivery.top", official_domains: [], reason: "The link domain is unrelated to the claimed company." },
+  url_analysis: [],
+  actions: ["Track the parcel in the carrier's official app, opened yourself.", "Report the message as spam and delete it."],
+  do_not_do: ["Don't open the link or pay the fee.", "Don't enter card details from a text message link."],
+  steps: ["Check your recent orders for an expected delivery", "Look up the carrier's official website yourself"],
+  limitations: ["Synthetic example for illustration."],
   safe_to_proceed: false,
   provider: "example",
   model: "illustrative",
+  scoring: null,
+  version: "example",
 };
 
 const INPUTS = [
@@ -43,7 +52,7 @@ const INPUTS = [
   { icon: Mail, label: "Emails", desc: "Body, sender & claimed brand" },
   { icon: Link2, label: "Links", desc: "Suspicious URLs" },
   { icon: Image, label: "Screenshots", desc: "PNG, JPG, WebP" },
-  { icon: QrCode, label: "QR codes", desc: "MVP preview" },
+  { icon: QrCode, label: "QR codes", desc: "Decoded safely, never opened" },
 ];
 
 const STEPS = [
@@ -68,7 +77,7 @@ function Landing() {
             Understand suspicious messages. <span className="text-brand">Verify what's real.</span> Act safely.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground md:text-lg">
-            FraudShield AI helps you analyze suspicious messages, emails, links, and screenshots for phishing, impersonation, and fraud signals — with clear explanations and safer next steps.
+            FraudShield AI analyzes suspicious messages, emails, links, screenshots, and QR codes to explain risk and help you respond safely.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Button asChild variant="hero" size="lg"><Link to="/analyze">Analyze Something <ArrowRight /></Link></Button>
