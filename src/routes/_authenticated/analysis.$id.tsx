@@ -7,37 +7,17 @@ import { PageHeader, EmptyState } from "@/components/app-shell";
 import { ResultView } from "@/components/result-view";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { analysisDetailQuery, type AnalysisDetail } from "@/lib/queries";
+import { analysisDetailQuery } from "@/lib/queries";
+import { toResultData } from "@/lib/result-mapper";
 import { getScreenshotUrl } from "@/lib/analysis.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { INPUT_LABEL, type InputType, type RiskLevel } from "@/lib/risk";
+import { INPUT_LABEL, type InputType } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/analysis/$id")({
   head: () => ({ meta: [{ title: "Analysis result — FraudShield AI" }, { name: "description", content: "Structured threat assessment." }] }),
   component: AnalysisPage,
 });
-
-const asStrings = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : []);
-
-export function toResultData(a: AnalysisDetail) {
-  return {
-    risk_level: a.risk_level as RiskLevel,
-    risk_score: a.risk_score,
-    confidence: a.confidence,
-    summary: a.summary,
-    categories: a.analysis_categories.map((c) => c.category),
-    claimed_identity: a.claimed_identity,
-    observed_indicators: asStrings(a.observed_indicators),
-    signals: a.analysis_signals,
-    actions: [...a.analysis_actions].sort((x, y) => x.sort_order - y.sort_order).map((x) => x.action_text),
-    steps: [...a.verification_steps].sort((x, y) => x.sort_order - y.sort_order).map((x) => x.step_text),
-    uncertainty: asStrings(a.uncertainty_notes),
-    safe_to_proceed: a.safe_to_proceed,
-    provider: a.provider,
-    model: a.model,
-  };
-}
 
 function AnalysisPage() {
   const { id } = Route.useParams();
