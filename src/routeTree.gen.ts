@@ -17,8 +17,14 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedAnalyzeRouteImport } from './routes/_authenticated/analyze'
+import { Route as AuthenticatedBillingRouteImport } from './routes/_authenticated/billing'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedHistoryRouteImport } from './routes/_authenticated/history'
+import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
 import { Route as AuthenticatedAnalysisIdRouteImport } from './routes/_authenticated/analysis.$id'
+import { Route as AuthenticatedReportIdRouteImport } from './routes/_authenticated/report.$id'
+import { Route as AuthenticatedThreatsCategoryRouteImport } from './routes/_authenticated/threats.$category'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,9 +65,29 @@ const AuthenticatedAnalyzeRoute = AuthenticatedAnalyzeRouteImport.update({
   path: '/analyze',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBillingRoute = AuthenticatedBillingRouteImport.update({
+  id: '/billing',
+  path: '/billing',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHistoryRoute = AuthenticatedHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedReportsRoute = AuthenticatedReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAnalysisIdRoute = AuthenticatedAnalysisIdRouteImport.update({
@@ -69,6 +95,17 @@ const AuthenticatedAnalysisIdRoute = AuthenticatedAnalysisIdRouteImport.update({
   path: '/analysis/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedReportIdRoute = AuthenticatedReportIdRouteImport.update({
+  id: '/report/$id',
+  path: '/report/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedThreatsCategoryRoute =
+  AuthenticatedThreatsCategoryRouteImport.update({
+    id: '/threats/$category',
+    path: '/threats/$category',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,8 +115,14 @@ export interface FileRoutesByFullPath {
   '/safety': typeof SafetyRoute
   '/signup': typeof SignupRoute
   '/analyze': typeof AuthenticatedAnalyzeRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/analysis/$id': typeof AuthenticatedAnalysisIdRoute
+  '/report/$id': typeof AuthenticatedReportIdRoute
+  '/threats/$category': typeof AuthenticatedThreatsCategoryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,8 +132,14 @@ export interface FileRoutesByTo {
   '/safety': typeof SafetyRoute
   '/signup': typeof SignupRoute
   '/analyze': typeof AuthenticatedAnalyzeRoute
+  '/billing': typeof AuthenticatedBillingRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/history': typeof AuthenticatedHistoryRoute
+  '/reports': typeof AuthenticatedReportsRoute
+  '/settings': typeof AuthenticatedSettingsRoute
   '/analysis/$id': typeof AuthenticatedAnalysisIdRoute
+  '/report/$id': typeof AuthenticatedReportIdRoute
+  '/threats/$category': typeof AuthenticatedThreatsCategoryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,8 +151,14 @@ export interface FileRoutesById {
   '/safety': typeof SafetyRoute
   '/signup': typeof SignupRoute
   '/_authenticated/analyze': typeof AuthenticatedAnalyzeRoute
+  '/_authenticated/billing': typeof AuthenticatedBillingRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/history': typeof AuthenticatedHistoryRoute
+  '/_authenticated/reports': typeof AuthenticatedReportsRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
   '/_authenticated/analysis/$id': typeof AuthenticatedAnalysisIdRoute
+  '/_authenticated/report/$id': typeof AuthenticatedReportIdRoute
+  '/_authenticated/threats/$category': typeof AuthenticatedThreatsCategoryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,8 +170,14 @@ export interface FileRouteTypes {
     | '/safety'
     | '/signup'
     | '/analyze'
+    | '/billing'
     | '/dashboard'
+    | '/history'
+    | '/reports'
+    | '/settings'
     | '/analysis/$id'
+    | '/report/$id'
+    | '/threats/$category'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -126,8 +187,14 @@ export interface FileRouteTypes {
     | '/safety'
     | '/signup'
     | '/analyze'
+    | '/billing'
     | '/dashboard'
+    | '/history'
+    | '/reports'
+    | '/settings'
     | '/analysis/$id'
+    | '/report/$id'
+    | '/threats/$category'
   id:
     | '__root__'
     | '/'
@@ -138,8 +205,14 @@ export interface FileRouteTypes {
     | '/safety'
     | '/signup'
     | '/_authenticated/analyze'
+    | '/_authenticated/billing'
     | '/_authenticated/dashboard'
+    | '/_authenticated/history'
+    | '/_authenticated/reports'
+    | '/_authenticated/settings'
     | '/_authenticated/analysis/$id'
+    | '/_authenticated/report/$id'
+    | '/_authenticated/threats/$category'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,11 +283,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyzeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/billing': {
+      id: '/_authenticated/billing'
+      path: '/billing'
+      fullPath: '/billing'
+      preLoaderRoute: typeof AuthenticatedBillingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/history': {
+      id: '/_authenticated/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AuthenticatedHistoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/reports': {
+      id: '/_authenticated/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof AuthenticatedReportsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/analysis/$id': {
@@ -224,19 +325,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalysisIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/report/$id': {
+      id: '/_authenticated/report/$id'
+      path: '/report/$id'
+      fullPath: '/report/$id'
+      preLoaderRoute: typeof AuthenticatedReportIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/threats/$category': {
+      id: '/_authenticated/threats/$category'
+      path: '/threats/$category'
+      fullPath: '/threats/$category'
+      preLoaderRoute: typeof AuthenticatedThreatsCategoryRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyzeRoute: typeof AuthenticatedAnalyzeRoute
+  AuthenticatedBillingRoute: typeof AuthenticatedBillingRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedHistoryRoute: typeof AuthenticatedHistoryRoute
+  AuthenticatedReportsRoute: typeof AuthenticatedReportsRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
   AuthenticatedAnalysisIdRoute: typeof AuthenticatedAnalysisIdRoute
+  AuthenticatedReportIdRoute: typeof AuthenticatedReportIdRoute
+  AuthenticatedThreatsCategoryRoute: typeof AuthenticatedThreatsCategoryRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyzeRoute: AuthenticatedAnalyzeRoute,
+  AuthenticatedBillingRoute: AuthenticatedBillingRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedHistoryRoute: AuthenticatedHistoryRoute,
+  AuthenticatedReportsRoute: AuthenticatedReportsRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
   AuthenticatedAnalysisIdRoute: AuthenticatedAnalysisIdRoute,
+  AuthenticatedReportIdRoute: AuthenticatedReportIdRoute,
+  AuthenticatedThreatsCategoryRoute: AuthenticatedThreatsCategoryRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
