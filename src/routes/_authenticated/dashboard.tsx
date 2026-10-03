@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo } from "react";
 import { ShieldCheck, ScanSearch, AlertOctagon, Activity, MessageSquareText, Link2, Image, Mail, QrCode, Lightbulb, ArrowRight, FileText, Siren, Gauge } from "lucide-react";
-import { PageHeader, EmptyState } from "@/components/app-shell";
+import { PageHeader } from "@/components/app-shell";
 import { useUsage } from "@/components/usage";
 import { AnalysisList } from "@/components/analysis-list";
 import { Button } from "@/components/ui/button";
@@ -175,7 +175,6 @@ function Dashboard() {
           </div>
         </div>
       </div>
-      {!isLoading && stats.total === 0 && <EmptyState icon={ScanSearch} title="No analyses yet" description="Run your first analysis to see insights here." />}
     </div>
   );
 }
