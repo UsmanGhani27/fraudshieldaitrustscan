@@ -194,6 +194,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
         .single();
       if (error || !row) throw new Error("persist_failed");
       const id = row.id;
+      // Result saved: commit the reservation by linking it (kept even if the analysis is later deleted).
+      if (reservationId) await supabaseAdmin.from("usage_events").update({ analysis_id: id }).eq("id", reservationId);
+      reservationId = null;
 
       const newUsed = used + 1;
       const alerts: { user_id: string; kind: string; severity: string; title: string; body: string; analysis_id?: string }[] = [];
@@ -211,7 +214,6 @@ export const runAnalysis = createServerFn({ method: "POST" })
           ...a.do_not_do.map((t, i) => ({ analysis_id: id, action_text: t, action_type: "avoid", sort_order: 100 + i })),
         ]),
         a.verification_steps.length ? supabaseAdmin.from("verification_steps").insert(a.verification_steps.map((t, i) => ({ analysis_id: id, step_text: t, sort_order: i }))) : null,
-        supabaseAdmin.from("usage_events").insert({ user_id: userId, event_type: "analysis", analysis_id: id, units: 1 }),
         alerts.length ? supabaseAdmin.from("alerts").insert(alerts) : null,
       ]);
 
@@ -223,6 +225,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
       return { ok: true, id, usedFallback };
     } catch (e) {
       console.error("[analysis] failure", e instanceof Error ? e.message : "unknown");
+      try { await release(); } catch { /* best effort */ }
       return { ok: false, code: "SERVER_ERROR", message: "Something went wrong while analyzing. You weren't charged for this attempt — please try again." };
     }
   });
