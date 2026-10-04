@@ -289,3 +289,44 @@ export const deleteAllData = createServerFn({ method: "POST" })
     await supabaseAdmin.from("security_events").insert({ user_id: userId, event_type: "all_data_deleted" });
     return { ok: !error };
   });
+
+/** Removes image files whose analyses were expired by the scheduled database cleanup. */
+async function flushPendingStorageDeletions(admin: Admin) {
+  const { data: pending } = await admin.from("pending_storage_deletions").select("id, path").limit(100);
+  if (!pending?.length) return;
+  const { error } = await admin.storage.from("screenshots").remove(pending.map((p) => p.path));
+  if (!error) await admin.from("pending_storage_deletions").delete().in("id", pending.map((p) => p.id));
+}
+
+/**
+ * Permanent self-service account deletion. Requires the user to retype their email.
+ * Removes all private data and stored images, then deletes the sign-in identity.
+ * This month's usage is carried over (by hashed email) so re-registering can't reset the limit.
+ */
+export const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ confirmEmail: z.string().max(320) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId, claims } = context;
+    const email = typeof claims.email === "string" ? claims.email : "";
+    if (!email || data.confirmEmail.trim().toLowerCase() !== email.toLowerCase()) {
+      return { ok: false as const, message: "The email you typed doesn't match your account." };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    try {
+      for (let i = 0; i < 20; i++) {
+        const { data: files } = await supabaseAdmin.storage.from("screenshots").list(userId, { limit: 1000 });
+        if (!files?.length) break;
+        const { error } = await supabaseAdmin.storage.from("screenshots").remove(files.map((f) => `${userId}/${f.name}`));
+        if (error) throw new Error("storage_cleanup_failed");
+      }
+      const { error: dbErr } = await supabaseAdmin.rpc("delete_user_data", { _user_id: userId });
+      if (dbErr) throw new Error("data_cleanup_failed");
+      const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authErr) throw new Error("auth_delete_failed");
+      return { ok: true as const };
+    } catch (e) {
+      console.error("[account] deletion failed", e instanceof Error ? e.message : "unknown");
+      return { ok: false as const, message: "We couldn't finish deleting your account. Please try again." };
+    }
+  });
