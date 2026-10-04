@@ -25,4 +25,12 @@
 - [x] Prompt-delimiter injection guard; drop advice reusing contact details from content
 - [x] Retention enforced on app visit; history-off titles generic; privacy copy matches storage
 - [x] Mobile dashboard overflow; clearer link findings; dedupe signals
-- [ ] Account self-deletion (not offered; needs product decision)
+- [x] Account self-deletion (typed-email confirm, full data + sign-in removal, usage carry-over)
+
+## Phase 4 — Third targeted pass
+- [x] Atomic usage reservation (DB-serialized; released on failure)
+- [x] Report print/PDF polish (A4, page breaks, risk chip, header/footer)
+- [x] Hourly scheduled retention cleanup + image deletion queue
+- [x] Auth UX: return path, forgot/reset password, resend confirmation, clearer errors
+- [x] Demo results labelled synthetic
+- [x] Visual scan of all pages desktop + mobile; security re-checks
