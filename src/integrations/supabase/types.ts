@@ -304,6 +304,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_storage_deletions: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          path: string
+        }
+        Insert: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          path: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          path?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -506,6 +527,7 @@ export type Database = {
     Functions: {
       delete_user_data: { Args: { _user_id: string }; Returns: undefined }
       owns_analysis: { Args: { _analysis_id: string }; Returns: boolean }
+      purge_expired_analyses: { Args: never; Returns: number }
       reserve_analysis_usage: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
