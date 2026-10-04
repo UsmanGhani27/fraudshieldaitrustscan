@@ -99,7 +99,7 @@ function Settings() {
       <Card title="Privacy & data retention" description="Control what FraudShield AI keeps about your analyses.">
         <div className="space-y-6">
           <div className="flex items-start justify-between gap-6">
-            <div><Label htmlFor="hist" className="text-sm font-medium">Store submitted content in history</Label><p className="mt-1 text-sm text-muted-foreground">When off, we keep only the assessment — not the raw text or screenshots you submit.</p></div>
+            <div><Label htmlFor="hist" className="text-sm font-medium">Store submitted content in history</Label><p className="mt-1 text-sm text-muted-foreground">When off, we keep only the assessment — not the full text or screenshots you submit. The assessment may still quote short, redacted snippets as evidence.</p></div>
             <Switch id="hist" checked={prefs?.history_enabled ?? true} disabled={!prefs} onCheckedChange={(v) => updatePrefs({ history_enabled: v })} />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
@@ -137,7 +137,7 @@ function Settings() {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete all analysis data?</AlertDialogTitle>
-                <AlertDialogDescription>This permanently removes all your analyses, signals, reports, alerts and stored evidence. Your account and this month's usage count remain. This can't be undone.</AlertDialogDescription>
+                <AlertDialogDescription>This permanently removes all your analyses, signals, reports, alerts and stored evidence. Your account, settings and this month's usage count remain (so the monthly limit can't be reset this way). This can't be undone.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={deleteAll}>Delete everything</AlertDialogAction></AlertDialogFooter>
             </AlertDialogContent>
