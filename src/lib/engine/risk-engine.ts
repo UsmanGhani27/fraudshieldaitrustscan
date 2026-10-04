@@ -130,7 +130,10 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
     urlSignals.unshift({ title: "Claimed identity doesn't match observed domain", severity: "high", evidence: `${verification.claimed || "Brand"} vs ${verification.observed_domain}`, explanation: verification.reason, source: "url" });
   }
   const seen = new Set<string>();
-  const signals = [...(model?.why_flagged ?? []), ...urlSignals, ...ruleSignals].filter((s) => {
+  // Skip rule signals whose matched text is already quoted as evidence by the model (avoids near-duplicate cards).
+  const modelEvidence = (model?.why_flagged ?? []).map((s) => s.evidence.toLowerCase()).join(" | ");
+  const freshRuleSignals = ruleSignals.filter((s, i) => !modelEvidence.includes((hits[i]?.match ?? "").toLowerCase()));
+  const signals = [...(model?.why_flagged ?? []), ...urlSignals, ...freshRuleSignals].filter((s) => {
     const k = s.title.toLowerCase().slice(0, 40);
     if (seen.has(k)) return false;
     seen.add(k);
