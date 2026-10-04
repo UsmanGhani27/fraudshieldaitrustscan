@@ -18,6 +18,9 @@ Rules:
 - Allowed threat values: ${THREAT_CATEGORIES.join(", ")}. Use "none" for primary_threat if nothing applies.
 - Keep the summary to 2-3 short sentences.`;
 
+// Neutralize delimiter tags so submitted content can't "close" the untrusted block and inject instructions.
+const fence = (v: string) => v.replace(/<\/?\s*user_content\s*>/gi, "[tag removed]");
+
 export function buildUserPrompt(input: NormalizedInput): string {
   const meta = [
     `Input type: ${input.type}`,
@@ -30,7 +33,7 @@ export function buildUserPrompt(input: NormalizedInput): string {
     input.context ? `User context: ${input.context}` : null,
     input.deterministicFindings?.length ? `Deterministic findings:\n- ${input.deterministicFindings.join("\n- ")}` : null,
   ].filter(Boolean).join("\n");
-  return `${meta}\n\n<user_content>\n${input.text || "(see attached image)"}\n</user_content>`;
+  return `${fence(meta)}\n\n<user_content>\n${fence(input.text) || "(see attached image)"}\n</user_content>`;
 }
 
 const str = { type: "string" } as const;

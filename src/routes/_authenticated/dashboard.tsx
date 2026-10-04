@@ -123,7 +123,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <div className="rounded-xl border border-border bg-card p-5">
+        <div className="min-w-0 rounded-xl border border-border bg-card p-5">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Average risk · last 14 days</h2>
           {stats.hasTrend ? (
             <div className="mt-4 h-48"><Suspense fallback={<div className="h-full animate-pulse rounded bg-muted/40" />}><RiskTrendChart data={stats.days} /></Suspense></div>
@@ -157,7 +157,7 @@ function Dashboard() {
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
-        <div>
+        <div className="min-w-0">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Recent analyses</h2>
             <Link to="/history" className="flex items-center gap-1 text-sm text-primary hover:underline">View all <ArrowRight className="size-3.5" /></Link>
