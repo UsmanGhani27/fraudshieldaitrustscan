@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_carryover: {
+        Row: {
+          created_at: string
+          email_hash: string
+          id: string
+          period_start: string
+          units: number
+        }
+        Insert: {
+          created_at?: string
+          email_hash: string
+          id?: string
+          period_start: string
+          units: number
+        }
+        Update: {
+          created_at?: string
+          email_hash?: string
+          id?: string
+          period_start?: string
+          units?: number
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           analysis_id: string | null
@@ -280,6 +304,27 @@ export type Database = {
         }
         Relationships: []
       }
+      pending_storage_deletions: {
+        Row: {
+          bucket: string
+          created_at: string
+          id: string
+          path: string
+        }
+        Insert: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          path: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          id?: string
+          path?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -480,7 +525,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_user_data: { Args: { _user_id: string }; Returns: undefined }
       owns_analysis: { Args: { _analysis_id: string }; Returns: boolean }
+      purge_expired_analyses: { Args: never; Returns: number }
+      reserve_analysis_usage: { Args: { _user_id: string }; Returns: Json }
     }
     Enums: {
       input_type: "message" | "email" | "url" | "screenshot" | "qr"

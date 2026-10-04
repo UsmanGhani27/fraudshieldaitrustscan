@@ -1,7 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useCallback } from "react";
 import { AuthCard } from "@/components/auth-card";
+import { safeReturnPath, takeReturnPath } from "@/lib/return-path";
 
 export const Route = createFileRoute("/auth")({
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => { const r = safeReturnPath(s["redirect"]); return r ? { redirect: r } : {}; },
   head: () => ({
     meta: [
       { title: "Sign in — FraudShield AI" },
@@ -15,10 +18,16 @@ export const Route = createFileRoute("/auth")({
 
 function SignIn() {
   const navigate = useNavigate();
+  const { redirect } = Route.useSearch();
+  const onDone = useCallback(() => {
+    const to = redirect ?? takeReturnPath() ?? "/dashboard";
+    navigate({ to, replace: true });
+  }, [redirect, navigate]);
   return (
     <AuthCard
       mode="signin"
-      onDone={() => navigate({ to: "/dashboard" })}
+      returnPath={redirect}
+      onDone={onDone}
       footer={<>New to FraudShield? <Link to="/signup" className="text-primary hover:underline">Create an account</Link></>}
     />
   );

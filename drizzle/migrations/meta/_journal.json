@@ -36,6 +36,20 @@
       "when": 1791098099059,
       "tag": "0004_least_privilege_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791099360088,
+      "tag": "0005_atomic_usage_and_account_deletion",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791099392520,
+      "tag": "0006_scheduled_retention_purge",
+      "breakpoints": true
     }
   ]
 }

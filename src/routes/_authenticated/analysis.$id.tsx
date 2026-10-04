@@ -85,6 +85,9 @@ function AnalysisPage() {
           </>
         }
       />
+      {typeof (a.details as Record<string, unknown> | null)?.["synthetic_demo"] === "string" && (
+        <p className="mb-4 rounded-lg border border-cyan/30 bg-cyan/10 px-4 py-2 text-sm">Synthetic demo: <strong>{String((a.details as Record<string, unknown>)["synthetic_demo"])}</strong>. This example is made up for demonstration — not real data.</p>
+      )}
       {(a.source_url || hasEvidence || a.evidence_deleted_at) && (
         <details className="mb-4 rounded-xl border border-border bg-card p-4 text-sm">
           <summary className="cursor-pointer font-medium">Submitted content</summary>

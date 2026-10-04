@@ -61,14 +61,18 @@ function ReportPage() {
         <Link to="/reports" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" />Reports</Link>
         <div className="flex gap-2">
           <Button variant="outline" onClick={download}><Download /> Download .txt</Button>
-          <Button variant="hero" onClick={() => window.print()}><Printer /> Print / Save as PDF</Button>
+          <Button variant="hero" onClick={() => window.print()}><Printer /> Print or save as PDF</Button>
         </div>
       </div>
-      <article className="print-sheet mx-auto max-w-3xl rounded-xl border border-border bg-card p-8 text-sm">
-        <header className="flex items-start justify-between border-b border-border pb-5">
+      <article className="print-sheet mx-auto max-w-3xl break-words rounded-xl border border-border bg-card p-5 text-sm [overflow-wrap:anywhere] sm:p-8">
+        <header className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-5">
           <div className="flex items-center gap-2 font-display text-lg font-semibold"><ShieldCheck className="size-5 text-cyan" />FraudShield AI</div>
-          <div className="text-right text-xs text-muted-foreground"><div>Security report</div><div>Report ID {report.id.slice(0, 8)}</div><div>{new Date(report.generated_at).toLocaleString()}</div></div>
+          <div className="text-xs text-muted-foreground sm:text-right"><div>Security report</div><div>Report ID {report.id.slice(0, 8)}</div><div>{new Date(report.generated_at).toLocaleString()}</div></div>
         </header>
+        <div className="print-avoid mt-5 flex flex-wrap items-center gap-3">
+          <span className="risk-chip rounded-full border border-border px-3 py-1 text-sm font-semibold">{RISK_LABEL[d.risk_level]} risk · {d.risk_score}/100</span>
+          <span className="text-xs text-muted-foreground">Confidence {d.confidence}% · AI-assisted assessment, not a guarantee</span>
+        </div>
         <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {[["Analysis ID", a.id.slice(0, 8)], ["Input type", INPUT_LABEL[a.input_type as InputType]], ["Analyzed", new Date(a.created_at).toLocaleString()], ["Risk", `${RISK_LABEL[d.risk_level]} · ${d.risk_score}/100`], ["Confidence", `${d.confidence}%`], ["Primary threat", primary ?? "None"]].map(([k, val]) => (
             <div key={k}><dt className="text-xs uppercase tracking-wider text-muted-foreground">{k}</dt><dd className="mt-0.5 font-medium">{val}</dd></div>
@@ -85,7 +89,7 @@ function ReportPage() {
         <H>Verification steps</H>
         <ul className="mt-2 space-y-1">{d.steps.map((x, i) => <li key={i}>☐ {r(x)}</li>)}</ul>
         <footer className="mt-8 border-t border-border pt-4 text-xs text-muted-foreground">
-          <strong>Limitations:</strong> {d.limitations.map(r).join(" ")} This report contains no raw submitted content. It is an automated, AI-assisted assessment — not a guarantee of safety. Verify independently through official channels.
+          <div className="mb-2 flex flex-wrap justify-between gap-2"><span>FraudShield AI · Report {report.id.slice(0, 8)}</span><span>Generated {new Date(report.generated_at).toLocaleString()}</span></div><strong>Limitations:</strong> {d.limitations.map(r).join(" ")} This report contains no raw submitted content. It is an automated, AI-assisted assessment — not a guarantee of safety. Verify independently through official channels.
         </footer>
       </article>
     </div>

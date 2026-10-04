@@ -6,6 +6,7 @@ import {
   PLAN_HISTORY_DAYS, USAGE_WARN_RATIO, analyzerAllowed, INPUT_LABEL, RISK_LABEL, type PlanCode,
 } from "./risk";
 import { normalizeText, redactSecrets, validateUrl } from "./validation";
+import { DEMO_EXAMPLES } from "./demo-examples";
 
 export type AnalyzeErrorCode = "LIMIT_REACHED" | "RATE_LIMITED" | "INVALID_INPUT" | "INVALID_URL" | "UPLOAD_INVALID" | "PLAN_LOCKED" | "SERVER_ERROR";
 export type AnalyzeResult = { ok: true; id: string; usedFallback: boolean } | { ok: false; code: AnalyzeErrorCode; message: string };
@@ -21,6 +22,7 @@ const inputSchema = z.object({
   claimedBrand: opt(120),
   context: opt(500),
   url: opt(2048),
+  demo: opt(80),
   image: z.object({ mime: z.string().max(40), base64: z.string().max(Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 16) }).optional(),
 });
 
@@ -47,12 +49,11 @@ export const getUsage = createServerFn({ method: "GET" })
     const used = (events ?? []).reduce((s, e) => s + (e.units ?? 1), 0);
     // Enforce retention on every app visit too, so it isn't only applied when a new analysis runs.
     try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: prefs } = await supabase.from("data_preferences").select("retention_days").eq("user_id", userId).maybeSingle();
       const days = [prefs?.retention_days ?? null, PLAN_HISTORY_DAYS[(profile?.plan_code ?? "free") as PlanCode]].filter((x): x is number => typeof x === "number");
-      if (days.length) {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await purgeOlderThan(supabaseAdmin, userId, Math.min(...days));
-      }
+      if (days.length) await purgeOlderThan(supabaseAdmin, userId, Math.min(...days));
+      await flushPendingStorageDeletions(supabaseAdmin);
     } catch { console.warn("[retention] purge skipped"); }
     return { plan: (profile?.plan_code ?? "free") as PlanCode, limit: profile?.monthly_analysis_limit ?? 10, used };
   });
@@ -67,13 +68,17 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const { assess } = await import("./engine/risk-engine");
     const { ANALYSIS_VERSION } = await import("./providers/prompt");
 
+    let reservationId: string | null = null;
+    const release = async () => {
+      if (reservationId) await supabaseAdmin.from("usage_events").delete().eq("id", reservationId).is("analysis_id", null);
+      reservationId = null;
+    };
     try {
       // --- server-side abuse + quota checks (never trusts client state) ---
       const since = new Date(Date.now() - 60_000).toISOString();
-      const [{ count: recent }, { data: profile }, { data: monthEvents }, { data: prefs }] = await Promise.all([
+      const [{ count: recent }, { data: profile }, { data: prefs }] = await Promise.all([
         supabaseAdmin.from("security_events").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("event_type", "analysis_attempt").gte("created_at", since),
         supabaseAdmin.from("profiles").select("plan_code, monthly_analysis_limit").eq("id", userId).maybeSingle(),
-        supabaseAdmin.from("usage_events").select("units").eq("user_id", userId).eq("event_type", "analysis").gte("created_at", monthStart()),
         supabaseAdmin.from("data_preferences").select("history_enabled, retention_days").eq("user_id", userId).maybeSingle(),
       ]);
       if ((recent ?? 0) >= RATE_LIMIT_PER_MINUTE) {
@@ -83,9 +88,6 @@ export const runAnalysis = createServerFn({ method: "POST" })
       await supabaseAdmin.from("security_events").insert({ user_id: userId, event_type: "analysis_attempt", metadata_json: { type: data.type } });
 
       const plan = (profile?.plan_code ?? "free") as PlanCode;
-      const limit = profile?.monthly_analysis_limit ?? 10;
-      const used = (monthEvents ?? []).reduce((s, e) => s + (e.units ?? 1), 0);
-      if (used >= limit) return { ok: false, code: "LIMIT_REACHED", message: `You've used all ${limit} analyses included this month.` };
       if (!analyzerAllowed(plan, data.type)) return { ok: false, code: "PLAN_LOCKED", message: `${INPUT_LABEL[data.type]} analysis isn't included in your plan.` };
       const historyEnabled = prefs?.history_enabled ?? true;
 
@@ -114,6 +116,16 @@ export const runAnalysis = createServerFn({ method: "POST" })
         text = redactSecrets(normalizeText([subject ? `Subject: ${subject}` : "", data.text ?? ""].filter(Boolean).join("\n\n")));
         if ((data.text ?? "").trim().length < MIN_TEXT_LENGTH) return { ok: false, code: "INVALID_INPUT", message: "Please paste a bit more of the content to analyze." };
       }
+
+      // --- atomic quota reservation: serialized per user in the database, so
+      // simultaneous requests cannot exceed the monthly limit. Released on failure.
+      const { data: resv, error: resvErr } = await supabaseAdmin.rpc("reserve_analysis_usage", { _user_id: userId });
+      if (resvErr || !resv) throw new Error("reservation_failed");
+      const r = resv as { ok: boolean; used: number; limit: number; reservation_id?: string };
+      const limit = r.limit;
+      const used = r.used;
+      if (!r.ok) return { ok: false, code: "LIMIT_REACHED", message: `You've used all ${limit} analyses included this month.` };
+      reservationId = r.reservation_id ?? null;
 
       // Deterministic pre-pass (shared with the model as context)
       const pre = assess({ type: data.type, text, sender, replyTo, claimedBrand, url }, null);
@@ -174,6 +186,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
             sender_notes: chain.output?.sender_notes ?? "",
             url_notes: chain.output?.url_notes ?? "",
             ai_failure: chain.failure,
+            synthetic_demo: data.demo && DEMO_EXAMPLES.some((x) => x.label === data.demo) ? data.demo : null,
           },
           provider: chain.provider,
           model: chain.model,
@@ -183,6 +196,9 @@ export const runAnalysis = createServerFn({ method: "POST" })
         .single();
       if (error || !row) throw new Error("persist_failed");
       const id = row.id;
+      // Result saved: commit the reservation by linking it (kept even if the analysis is later deleted).
+      if (reservationId) await supabaseAdmin.from("usage_events").update({ analysis_id: id }).eq("id", reservationId);
+      reservationId = null;
 
       const newUsed = used + 1;
       const alerts: { user_id: string; kind: string; severity: string; title: string; body: string; analysis_id?: string }[] = [];
@@ -200,7 +216,6 @@ export const runAnalysis = createServerFn({ method: "POST" })
           ...a.do_not_do.map((t, i) => ({ analysis_id: id, action_text: t, action_type: "avoid", sort_order: 100 + i })),
         ]),
         a.verification_steps.length ? supabaseAdmin.from("verification_steps").insert(a.verification_steps.map((t, i) => ({ analysis_id: id, step_text: t, sort_order: i }))) : null,
-        supabaseAdmin.from("usage_events").insert({ user_id: userId, event_type: "analysis", analysis_id: id, units: 1 }),
         alerts.length ? supabaseAdmin.from("alerts").insert(alerts) : null,
       ]);
 
@@ -212,6 +227,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
       return { ok: true, id, usedFallback };
     } catch (e) {
       console.error("[analysis] failure", e instanceof Error ? e.message : "unknown");
+      try { await release(); } catch { /* best effort */ }
       return { ok: false, code: "SERVER_ERROR", message: "Something went wrong while analyzing. You weren't charged for this attempt — please try again." };
     }
   });
@@ -275,4 +291,45 @@ export const deleteAllData = createServerFn({ method: "POST" })
     const { error } = await supabase.from("analyses").delete().eq("user_id", userId);
     await supabaseAdmin.from("security_events").insert({ user_id: userId, event_type: "all_data_deleted" });
     return { ok: !error };
+  });
+
+/** Removes image files whose analyses were expired by the scheduled database cleanup. */
+async function flushPendingStorageDeletions(admin: Admin) {
+  const { data: pending } = await admin.from("pending_storage_deletions").select("id, path").limit(100);
+  if (!pending?.length) return;
+  const { error } = await admin.storage.from("screenshots").remove(pending.map((p) => p.path));
+  if (!error) await admin.from("pending_storage_deletions").delete().in("id", pending.map((p) => p.id));
+}
+
+/**
+ * Permanent self-service account deletion. Requires the user to retype their email.
+ * Removes all private data and stored images, then deletes the sign-in identity.
+ * This month's usage is carried over (by hashed email) so re-registering can't reset the limit.
+ */
+export const deleteAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ confirmEmail: z.string().max(320) }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { userId, claims } = context;
+    const email = typeof claims.email === "string" ? claims.email : "";
+    if (!email || data.confirmEmail.trim().toLowerCase() !== email.toLowerCase()) {
+      return { ok: false as const, message: "The email you typed doesn't match your account." };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    try {
+      for (let i = 0; i < 20; i++) {
+        const { data: files } = await supabaseAdmin.storage.from("screenshots").list(userId, { limit: 1000 });
+        if (!files?.length) break;
+        const { error } = await supabaseAdmin.storage.from("screenshots").remove(files.map((f) => `${userId}/${f.name}`));
+        if (error) throw new Error("storage_cleanup_failed");
+      }
+      const { error: dbErr } = await supabaseAdmin.rpc("delete_user_data", { _user_id: userId });
+      if (dbErr) throw new Error("data_cleanup_failed");
+      const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (authErr) throw new Error("auth_delete_failed");
+      return { ok: true as const };
+    } catch (e) {
+      console.error("[account] deletion failed", e instanceof Error ? e.message : "unknown");
+      return { ok: false as const, message: "We couldn't finish deleting your account. Please try again." };
+    }
   });
