@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/hooks/use-auth";
 import { profileQuery } from "@/lib/queries";
 import { supabase } from "@/integrations/supabase/client";
-import { deleteAllData } from "@/lib/analysis.functions";
+import { deleteAllData, deleteAccount } from "@/lib/analysis.functions";
 import { PLANNED_INTEGRATIONS } from "@/lib/providers/types";
 import { PLAN_HISTORY_DAYS, type PlanCode } from "@/lib/risk";
 
@@ -38,10 +38,13 @@ function Settings() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const del = useServerFn(deleteAllData);
+  const removeAccount = useServerFn(deleteAccount);
   const { data } = useQuery({ ...profileQuery(user?.id ?? ""), enabled: !!user });
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
 
   useEffect(() => { if (data?.profile) setName(data.profile.full_name ?? ""); }, [data?.profile]);
 
@@ -82,6 +85,22 @@ function Settings() {
 
   const signOut = async () => { await supabase.auth.signOut(); qc.clear(); navigate({ to: "/" }); };
 
+  const closeAccount = async () => {
+    setClosing(true);
+    try {
+      const res = await removeAccount({ data: { confirmEmail } });
+      if (!res.ok) { toast.error(res.message); return; }
+      await supabase.auth.signOut({ scope: "local" });
+      qc.clear();
+      toast.success("Your account and data were permanently deleted.");
+      navigate({ to: "/" });
+    } catch {
+      toast.error("We couldn't finish deleting your account. Please try again.");
+    } finally {
+      setClosing(false);
+    }
+  };
+
   const prefs = data?.prefs;
 
   return (
@@ -103,7 +122,7 @@ function Settings() {
             <Switch id="hist" checked={prefs?.history_enabled ?? true} disabled={!prefs} onCheckedChange={(v) => updatePrefs({ history_enabled: v })} />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <div><p className="text-sm font-medium">Automatic deletion</p><p className="mt-1 text-sm text-muted-foreground">Analyses (and their evidence) older than this are removed automatically.{PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode] ? ` Your plan keeps history for up to ${PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode]} days.` : ""}</p></div>
+            <div><p className="text-sm font-medium">Automatic deletion</p><p className="mt-1 text-sm text-muted-foreground">Analyses (and their evidence) older than this are removed by an hourly cleanup.{PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode] ? ` Your plan keeps history for up to ${PLAN_HISTORY_DAYS[(data?.profile?.plan_code ?? "free") as PlanCode]} days.` : ""}</p></div>
             <Select value={prefs?.retention_days ? String(prefs.retention_days) : "never"} disabled={!prefs} onValueChange={(v) => updatePrefs({ retention_days: v === "never" ? null : Number(v) })}>
               <SelectTrigger className="w-48" aria-label="Retention period"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -144,6 +163,27 @@ function Settings() {
           </AlertDialog>
         </div>
       </Card>
+
+      <section className="rounded-xl border border-destructive/40 bg-card p-6" aria-labelledby="danger-title">
+        <h2 id="danger-title" className="text-lg font-semibold text-destructive">Delete account</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Permanently deletes your sign-in, profile, preferences, analyses, reports, alerts and stored images. This can't be undone. This month's usage count is kept in anonymised form (a one-way hash of your email), so signing up again this month won't reset the limit.</p>
+        <AlertDialog onOpenChange={(o) => { if (!o) setConfirmEmail(""); }}>
+          <AlertDialogTrigger asChild><Button variant="destructive" className="mt-4" disabled={closing}>{closing ? <Loader2 className="animate-spin" /> : <Trash2 />}Delete my account</Button></AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Permanently delete your account?</AlertDialogTitle>
+              <AlertDialogDescription>Everything is removed immediately and can't be recovered. Type your email <strong className="text-foreground">{user?.email}</strong> to confirm.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-1.5"><Label htmlFor="confirm-email">Your email</Label><Input id="confirm-email" value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} autoComplete="off" /></div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <Button variant="destructive" disabled={closing || confirmEmail.trim().toLowerCase() !== (user?.email ?? "").toLowerCase()} onClick={closeAccount}>
+                {closing && <Loader2 className="animate-spin" />}Delete account forever
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </section>
     </div>
   );
 }
