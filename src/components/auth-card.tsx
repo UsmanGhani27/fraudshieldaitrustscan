@@ -8,8 +8,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { rememberReturnPath } from "@/lib/return-path";
 
-export function AuthCard({ mode, onDone, footer }: { mode: "signin" | "signup"; onDone: () => void; footer: React.ReactNode }) {
+export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" | "signup"; onDone: () => void; footer: React.ReactNode; returnPath?: string }) {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,12 +18,14 @@ export function AuthCard({ mode, onDone, footer }: { mode: "signin" | "signup"; 
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   useEffect(() => { if (user) onDone(); }, [user, onDone]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     if (password.length < 8) return setError("Password must be at least 8 characters.");
     setBusy(true);
     try {
@@ -40,13 +43,35 @@ export function AuthCard({ mode, onDone, footer }: { mode: "signin" | "signup"; 
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
-      setError(/invalid login/i.test(msg) ? "Email or password is incorrect." : /already registered/i.test(msg) ? "An account with this email already exists." : msg || "Something went wrong. Please try again.");
+      setError(
+        /invalid login/i.test(msg) ? "Email or password is incorrect."
+        : /not confirmed/i.test(msg) ? "Please confirm your email first — check your inbox for the link, or resend it below."
+        : /already registered/i.test(msg) ? "An account with this email already exists. Try signing in instead."
+        : /weak|pwned|leaked/i.test(msg) ? "That password is too common or has appeared in a data breach. Please choose another."
+        : /rate limit|too many/i.test(msg) ? "Too many attempts. Please wait a minute and try again."
+        : "Something went wrong. Please try again.");
     } finally {
       setBusy(false);
     }
   };
 
+  const resend = async () => {
+    if (!email.trim()) return setError("Enter your email address first.");
+    const { error } = await supabase.auth.resend({ type: "signup", email: email.trim(), options: { emailRedirectTo: `${window.location.origin}/dashboard` } });
+    if (error) toast.error("Couldn't resend the email. Please wait a minute and try again.");
+    else toast.success("Confirmation email sent again.");
+  };
+
+  const forgot = async () => {
+    setError(null);
+    if (!email.trim()) return setError("Enter your email address above, then choose “Forgot password?”.");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/reset-password` });
+    if (error) return setError("Couldn't send a reset email. Please wait a minute and try again.");
+    setInfo("If an account exists for this email, a password reset link is on its way.");
+  };
+
   const google = async () => {
+    rememberReturnPath(returnPath);
     const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
     if (result.error) toast.error("Google sign-in failed. Please try again.");
   };
@@ -60,7 +85,12 @@ export function AuthCard({ mode, onDone, footer }: { mode: "signin" | "signup"; 
             <div className="py-6 text-center">
               <MailCheck className="mx-auto size-10 text-cyan" />
               <h1 className="mt-4 text-xl font-semibold">Check your inbox</h1>
-              <p className="mt-2 text-sm text-muted-foreground">We sent a confirmation link to <strong className="text-foreground">{email}</strong>. Open it to activate your account.</p>
+              <p className="mt-2 text-sm text-muted-foreground">We sent a confirmation link to <strong className="text-foreground">{email}</strong>. Open it to activate your account, then sign in.</p>
+              <p className="mt-3 text-xs text-muted-foreground">Nothing after a few minutes? Check spam, or</p>
+              <div className="mt-2 flex justify-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={resend}>Resend email</Button>
+                <Button type="button" variant="ghost" size="sm" onClick={() => { setSent(false); setPassword(""); }}>Use a different email</Button>
+              </div>
             </div>
           ) : (
             <>
@@ -77,7 +107,11 @@ export function AuthCard({ mode, onDone, footer }: { mode: "signin" | "signup"; 
                 )}
                 <div className="space-y-1.5"><Label htmlFor="email">Email</Label><Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" /></div>
                 <div className="space-y-1.5"><Label htmlFor="password">Password</Label><Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} /></div>
+                {mode === "signin" && <div className="-mt-2 text-right"><button type="button" onClick={forgot} className="text-xs text-muted-foreground hover:text-foreground hover:underline">Forgot password?</button></div>}
+                {mode === "signup" && <p className="-mt-2 text-xs text-muted-foreground">At least 8 characters.</p>}
                 {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+                {error && /confirm your email/.test(error) && <button type="button" onClick={resend} className="text-xs text-primary hover:underline">Resend confirmation email</button>}
+                {info && <p role="status" className="text-sm text-muted-foreground">{info}</p>}
                 <Button type="submit" variant="hero" className="w-full" disabled={busy}>
                   {busy && <Loader2 className="animate-spin" />}
                   {mode === "signup" ? "Create account" : "Sign in"}
