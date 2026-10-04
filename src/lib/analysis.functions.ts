@@ -67,13 +67,17 @@ export const runAnalysis = createServerFn({ method: "POST" })
     const { assess } = await import("./engine/risk-engine");
     const { ANALYSIS_VERSION } = await import("./providers/prompt");
 
+    let reservationId: string | null = null;
+    const release = async () => {
+      if (reservationId) await supabaseAdmin.from("usage_events").delete().eq("id", reservationId).is("analysis_id", null);
+      reservationId = null;
+    };
     try {
       // --- server-side abuse + quota checks (never trusts client state) ---
       const since = new Date(Date.now() - 60_000).toISOString();
-      const [{ count: recent }, { data: profile }, { data: monthEvents }, { data: prefs }] = await Promise.all([
+      const [{ count: recent }, { data: profile }, { data: prefs }] = await Promise.all([
         supabaseAdmin.from("security_events").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("event_type", "analysis_attempt").gte("created_at", since),
         supabaseAdmin.from("profiles").select("plan_code, monthly_analysis_limit").eq("id", userId).maybeSingle(),
-        supabaseAdmin.from("usage_events").select("units").eq("user_id", userId).eq("event_type", "analysis").gte("created_at", monthStart()),
         supabaseAdmin.from("data_preferences").select("history_enabled, retention_days").eq("user_id", userId).maybeSingle(),
       ]);
       if ((recent ?? 0) >= RATE_LIMIT_PER_MINUTE) {
@@ -83,9 +87,6 @@ export const runAnalysis = createServerFn({ method: "POST" })
       await supabaseAdmin.from("security_events").insert({ user_id: userId, event_type: "analysis_attempt", metadata_json: { type: data.type } });
 
       const plan = (profile?.plan_code ?? "free") as PlanCode;
-      const limit = profile?.monthly_analysis_limit ?? 10;
-      const used = (monthEvents ?? []).reduce((s, e) => s + (e.units ?? 1), 0);
-      if (used >= limit) return { ok: false, code: "LIMIT_REACHED", message: `You've used all ${limit} analyses included this month.` };
       if (!analyzerAllowed(plan, data.type)) return { ok: false, code: "PLAN_LOCKED", message: `${INPUT_LABEL[data.type]} analysis isn't included in your plan.` };
       const historyEnabled = prefs?.history_enabled ?? true;
 
