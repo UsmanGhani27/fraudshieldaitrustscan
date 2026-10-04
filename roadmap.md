@@ -18,3 +18,11 @@
 - [x] Dashboard: critical count, reports, remaining, category breakdown
 - [x] History sort
 - [x] QA pass + security linter
+
+## Phase 3 — Second QA pass
+- [x] Signed-in E2E (all 5 analyzers, report, deletion, delete-all, limit, sign-out)
+- [x] Column-level grants (plan/limit/results not editable from browser), least-privilege table grants
+- [x] Prompt-delimiter injection guard; drop advice reusing contact details from content
+- [x] Retention enforced on app visit; history-off titles generic; privacy copy matches storage
+- [x] Mobile dashboard overflow; clearer link findings; dedupe signals
+- [ ] Account self-deletion (not offered; needs product decision)
