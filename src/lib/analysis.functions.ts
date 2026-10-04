@@ -6,6 +6,7 @@ import {
   PLAN_HISTORY_DAYS, USAGE_WARN_RATIO, analyzerAllowed, INPUT_LABEL, RISK_LABEL, type PlanCode,
 } from "./risk";
 import { normalizeText, redactSecrets, validateUrl } from "./validation";
+import { DEMO_EXAMPLES } from "./demo-examples";
 
 export type AnalyzeErrorCode = "LIMIT_REACHED" | "RATE_LIMITED" | "INVALID_INPUT" | "INVALID_URL" | "UPLOAD_INVALID" | "PLAN_LOCKED" | "SERVER_ERROR";
 export type AnalyzeResult = { ok: true; id: string; usedFallback: boolean } | { ok: false; code: AnalyzeErrorCode; message: string };
@@ -21,6 +22,7 @@ const inputSchema = z.object({
   claimedBrand: opt(120),
   context: opt(500),
   url: opt(2048),
+  demo: opt(80),
   image: z.object({ mime: z.string().max(40), base64: z.string().max(Math.ceil((MAX_IMAGE_BYTES * 4) / 3) + 16) }).optional(),
 });
 
@@ -184,6 +186,7 @@ export const runAnalysis = createServerFn({ method: "POST" })
             sender_notes: chain.output?.sender_notes ?? "",
             url_notes: chain.output?.url_notes ?? "",
             ai_failure: chain.failure,
+            synthetic_demo: data.demo && DEMO_EXAMPLES.some((x) => x.label === data.demo) ? data.demo : null,
           },
           provider: chain.provider,
           model: chain.model,

@@ -132,6 +132,7 @@ function Analyze() {
       const res = await analyze({
         data: {
           type,
+          ...(demo ? { demo } : {}),
           text: type === "message" || type === "email" ? f.text : undefined,
           sender: f.sender || undefined,
           replyTo: type === "email" ? f.replyTo || undefined : undefined,
