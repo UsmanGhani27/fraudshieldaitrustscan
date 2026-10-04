@@ -4,7 +4,7 @@ import { AuthCard } from "@/components/auth-card";
 import { safeReturnPath, takeReturnPath } from "@/lib/return-path";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { redirect?: string } => ({ redirect: safeReturnPath(s.redirect) }),
+  validateSearch: (s: Record<string, unknown>): { redirect?: string } => { const r = safeReturnPath(s["redirect"]); return r ? { redirect: r } : {}; },
   head: () => ({
     meta: [
       { title: "Sign in — FraudShield AI" },

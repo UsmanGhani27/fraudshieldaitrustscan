@@ -10,7 +10,7 @@ import { Label } from "./ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { rememberReturnPath } from "@/lib/return-path";
 
-export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" | "signup"; onDone: () => void; footer: React.ReactNode; returnPath?: string }) {
+export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" | "signup"; onDone: () => void; footer: React.ReactNode; returnPath?: string | undefined }) {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
