@@ -61,15 +61,15 @@ export function analyzeUrl(raw: string): UrlAnalysis | null {
   let lookalike: string | null = null;
 
   if (url.protocol === "http:") findings.push({ code: "no_https", title: "Not using HTTPS", severity: "low", detail: "The connection would not be encrypted." });
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) findings.push({ code: "ip_host", title: "Raw IP address instead of a domain", severity: "high", detail: host });
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) findings.push({ code: "ip_host", title: "Raw IP address instead of a domain", severity: "high", detail: `The link goes to ${host}, a bare IP address. Legitimate organizations almost always use a named domain.` });
   if (host.startsWith("xn--") || host.includes(".xn--")) findings.push({ code: "punycode", title: "Internationalized (punycode) domain", severity: "high", detail: "Can be used to imitate familiar domains with look-alike characters." });
   if (url.username || url.password || raw.includes("@")) findings.push({ code: "userinfo", title: "Contains '@' or embedded credentials", severity: "high", detail: "Text before '@' can disguise the real destination." });
-  if (SHORTENERS.includes(reg) || SHORTENERS.includes(host)) findings.push({ code: "shortener", title: "Link shortener hides the destination", severity: "medium", detail: reg });
+  if (SHORTENERS.includes(reg) || SHORTENERS.includes(host)) findings.push({ code: "shortener", title: "Link shortener hides the destination", severity: "medium", detail: `${reg} is a link shortener, so you can't see where the link really goes.` });
   if (RISKY_TLDS.includes(tld)) findings.push({ code: "risky_tld", title: `Uncommon domain ending (.${tld})`, severity: "medium", detail: "Frequently abused because it's cheap to register." });
-  if (host.split(".").length > 4) findings.push({ code: "deep_subdomain", title: "Unusually many subdomains", severity: "medium", detail: host });
+  if (host.split(".").length > 4) findings.push({ code: "deep_subdomain", title: "Unusually many subdomains", severity: "medium", detail: `${host} stacks many subdomains, which can push the real domain out of view.` });
   if ((label.match(/-/g) ?? []).length >= 2) findings.push({ code: "hyphenated", title: "Heavily hyphenated domain", severity: "low", detail: `${reg} strings several words together with hyphens — a pattern common in throwaway phishing domains.` });
   if (PATH_BAITS.test(url.pathname + url.search)) findings.push({ code: "bait_path", title: "Login / verification wording in the link path", severity: "medium", detail: `The path “${(url.pathname + url.search).slice(0, 80)}” uses login/verification wording, often used to make a fake page look official.` });
-  if (url.search.length > 200) findings.push({ code: "long_query", title: "Very long tracking/query string", severity: "low", detail: `${url.search.length} characters` });
+  if (url.search.length > 200) findings.push({ code: "long_query", title: "Very long tracking/query string", severity: "low", detail: `The query string is ${url.search.length} characters long, which can hide tracking or redirect data.` });
 
   for (const [brand, domains] of Object.entries(KNOWN_BRANDS)) {
     if (isOfficialDomain(host, brand)) continue;
