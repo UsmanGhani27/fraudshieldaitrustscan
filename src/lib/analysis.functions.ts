@@ -47,12 +47,11 @@ export const getUsage = createServerFn({ method: "GET" })
     const used = (events ?? []).reduce((s, e) => s + (e.units ?? 1), 0);
     // Enforce retention on every app visit too, so it isn't only applied when a new analysis runs.
     try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: prefs } = await supabase.from("data_preferences").select("retention_days").eq("user_id", userId).maybeSingle();
       const days = [prefs?.retention_days ?? null, PLAN_HISTORY_DAYS[(profile?.plan_code ?? "free") as PlanCode]].filter((x): x is number => typeof x === "number");
-      if (days.length) {
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        await purgeOlderThan(supabaseAdmin, userId, Math.min(...days));
-      }
+      if (days.length) await purgeOlderThan(supabaseAdmin, userId, Math.min(...days));
+      await flushPendingStorageDeletions(supabaseAdmin);
     } catch { console.warn("[retention] purge skipped"); }
     return { plan: (profile?.plan_code ?? "free") as PlanCode, limit: profile?.monthly_analysis_limit ?? 10, used };
   });
