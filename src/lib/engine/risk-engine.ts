@@ -78,7 +78,9 @@ const DO_NOT = [
 ];
 
 // Never recommend contacting via data contained in the suspicious content.
-const UNSAFE_ADVICE = /(click (the|this) link|call the number (in|from) (the|this) message|reply to (this|the) (message|email) to verify|use the link provided)/i;
+const UNSAFE_ADVICE = /\b(click|tap|follow|open|visit|use) (on )?(the|this|that) (link|url|button)\b|\b(call|text|contact|reply to) (the|this) (number|sender|phone)\b|\bnumber (provided|listed|given|in the (message|email))\b|\breply to (this|the) (message|email|text)\b|\bscan (the|this) (qr|code)\b(?! with caution)|\blink provided\b/i;
+const URLISH = /(https?:\/\/|www\.)\S+|\b[a-z0-9-]+\.(com|net|org|co|io|info|biz|xyz|top|online|site|app)\b/gi;
+const PHONEISH = /\+?\d[\d\s().-]{7,}\d/g;
 
 export function assess(input: EngineInput, model: ModelOutput | null): FinalAssessment {
   const corpus = [input.text, input.sender, input.replyTo, input.url].filter(Boolean).join("\n");
@@ -170,7 +172,10 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
   confidence = Math.max(5, Math.min(95, confidence));
 
   const level = scoreToLevel(final);
-  const filterUnsafe = (l: string[]) => l.filter((x) => !UNSAFE_ADVICE.test(x));
+  // Drop model advice that points at contact details (links, domains, phone numbers) taken from the suspicious content.
+  const inputContacts = new Set([...(corpus.match(URLISH) ?? []), ...(corpus.match(PHONEISH) ?? [])].map((x) => x.toLowerCase().replace(/[^a-z0-9.]/g, "")).filter((x) => x.length >= 6));
+  const reusesContact = (x: string) => [...(x.match(URLISH) ?? []), ...(x.match(PHONEISH) ?? [])].some((c) => inputContacts.has(c.toLowerCase().replace(/[^a-z0-9.]/g, "")));
+  const filterUnsafe = (l: string[]) => l.filter((x) => !UNSAFE_ADVICE.test(x) && !reusesContact(x));
   const merge = (a: string[], b: string[], n: number) => Array.from(new Set([...filterUnsafe(a), ...b])).slice(0, n);
 
   const observed = [

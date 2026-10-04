@@ -45,6 +45,15 @@ export const getUsage = createServerFn({ method: "GET" })
       supabase.from("usage_events").select("units").eq("user_id", userId).eq("event_type", "analysis").gte("created_at", monthStart()),
     ]);
     const used = (events ?? []).reduce((s, e) => s + (e.units ?? 1), 0);
+    // Enforce retention on every app visit too, so it isn't only applied when a new analysis runs.
+    try {
+      const { data: prefs } = await supabase.from("data_preferences").select("retention_days").eq("user_id", userId).maybeSingle();
+      const days = [prefs?.retention_days ?? null, PLAN_HISTORY_DAYS[(profile?.plan_code ?? "free") as PlanCode]].filter((x): x is number => typeof x === "number");
+      if (days.length) {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        await purgeOlderThan(supabaseAdmin, userId, Math.min(...days));
+      }
+    } catch { console.warn("[retention] purge skipped"); }
     return { plan: (profile?.plan_code ?? "free") as PlanCode, limit: profile?.monthly_analysis_limit ?? 10, used };
   });
 
@@ -116,6 +125,8 @@ export const runAnalysis = createServerFn({ method: "POST" })
       const hash = await sha256(`${data.type}|${text}|${image ? image.base64.slice(0, 4096) : ""}`);
       let title = "";
       try { title = url ? new URL(url).hostname : ""; } catch { /* ignore */ }
+      // With history off, avoid persisting content-derived titles (the first line could be sensitive).
+      if (!historyEnabled) title = title || `${INPUT_LABEL[data.type]} analysis`;
       title = (title || subject || claimedBrand || a.claimed_identity || sender || (text.split("\n")[0] ?? "") || `${INPUT_LABEL[data.type]} analysis`).slice(0, 80);
 
       let screenshotPath: string | null = null;
