@@ -116,6 +116,16 @@ export const runAnalysis = createServerFn({ method: "POST" })
         if ((data.text ?? "").trim().length < MIN_TEXT_LENGTH) return { ok: false, code: "INVALID_INPUT", message: "Please paste a bit more of the content to analyze." };
       }
 
+      // --- atomic quota reservation: serialized per user in the database, so
+      // simultaneous requests cannot exceed the monthly limit. Released on failure.
+      const { data: resv, error: resvErr } = await supabaseAdmin.rpc("reserve_analysis_usage", { _user_id: userId });
+      if (resvErr || !resv) throw new Error("reservation_failed");
+      const r = resv as { ok: boolean; used: number; limit: number; reservation_id?: string };
+      const limit = r.limit;
+      const used = r.used;
+      if (!r.ok) return { ok: false, code: "LIMIT_REACHED", message: `You've used all ${limit} analyses included this month.` };
+      reservationId = r.reservation_id ?? null;
+
       // Deterministic pre-pass (shared with the model as context)
       const pre = assess({ type: data.type, text, sender, replyTo, claimedBrand, url }, null);
       const deterministicFindings = pre.signals.slice(0, 8).map((s) => `${s.title} (${s.evidence})`);
