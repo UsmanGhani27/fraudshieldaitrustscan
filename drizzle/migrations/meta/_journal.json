@@ -29,6 +29,13 @@
       "when": 1791098075649,
       "tag": "0003_restrict_client_updates",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791098099059,
+      "tag": "0004_least_privilege_grants",
+      "breakpoints": true
     }
   ]
 }
