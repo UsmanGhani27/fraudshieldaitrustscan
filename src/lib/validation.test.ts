@@ -81,4 +81,23 @@ describe("prompt + advice safety", () => {
     expect(a.recommended_actions.some((x) => x.includes("secure-pay-help"))).toBe(false);
     expect(a.recommended_actions).toContain("Open the official app yourself");
   });
+  it("rejects malformed model output of the wrong shape", () => {
+    expect(sanitizeModelOutput(null)).toBeNull();
+    expect(sanitizeModelOutput("risk_score: 0")).toBeNull();
+    expect(sanitizeModelOutput([1, 2, 3])).toBeNull();
+    const a = sanitizeModelOutput({ risk_score: "abc", confidence: {}, summary: 42, recommended_actions: "click" });
+    if (a) {
+      expect(Number.isFinite(a.risk_score)).toBe(true);
+      expect(Array.isArray(a.recommended_actions)).toBe(true);
+    }
+  });
+  it("drops advice to reply to the sender or scan the code", () => {
+    const model = sanitizeModelOutput({ risk_score: 70, confidence: 70, summary: "s", recommended_actions: ["Reply to the sender to confirm your identity", "Scan the QR code to check the payment page", "Report the message as phishing"] });
+    const a = assess({ type: "message", text: "Parking fine due. Scan the code to pay now." }, model);
+    expect(a.recommended_actions.some((x) => /reply to the sender/i.test(x))).toBe(false);
+    expect(a.recommended_actions.some((x) => /scan the qr code to/i.test(x))).toBe(false);
+  });
+  it("redacts API keys", () => {
+    expect(redactSecrets("api key sk-live-abcdef1234567890abcdef")).not.toContain("sk-live-abcdef1234567890abcdef");
+  });
 });
