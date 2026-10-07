@@ -8,7 +8,7 @@ import {
 import { normalizeText, redactSecrets, validateUrl } from "./validation";
 import { DEMO_EXAMPLES } from "./demo-examples";
 
-export type AnalyzeErrorCode = "LIMIT_REACHED" | "RATE_LIMITED" | "INVALID_INPUT" | "INVALID_URL" | "UPLOAD_INVALID" | "PLAN_LOCKED" | "SERVER_ERROR";
+export type AnalyzeErrorCode = "LIMIT_REACHED" | "RATE_LIMITED" | "INVALID_INPUT" | "INVALID_URL" | "UPLOAD_INVALID" | "PLAN_LOCKED" | "AI_UNAVAILABLE" | "SERVER_ERROR";
 export type AnalyzeResult = { ok: true; id: string; usedFallback: boolean } | { ok: false; code: AnalyzeErrorCode; message: string };
 
 const opt = (max: number) => z.string().max(max).optional();
@@ -131,6 +131,12 @@ export const runAnalysis = createServerFn({ method: "POST" })
       const pre = assess({ type: data.type, text, sender, replyTo, claimedBrand, url }, null);
       const deterministicFindings = pre.signals.slice(0, 8).map((s) => `${s.title} (${s.evidence})`);
       const chain = await runProviderChain({ type: data.type, text, sender, replyTo, subject, attachments, claimedBrand, context: ctx, url, image, deterministicFindings });
+      // Rule checks can't read images. Without the AI, an image-only check would show a
+      // falsely reassuring "Low" score — refuse instead and give the reserved slot back.
+      if (!chain.output && image && !url) {
+        await release();
+        return { ok: false, code: "AI_UNAVAILABLE", message: "Image analysis is temporarily unavailable, so we can't assess this screenshot safely right now. You weren't charged. Please try again later, or paste the text or link instead." };
+      }
       const a = chain.output ? assess({ type: data.type, text, sender, replyTo, claimedBrand, url }, chain.output) : pre;
       const usedFallback = !chain.output;
 
