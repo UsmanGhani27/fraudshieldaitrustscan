@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 const RiskTrendChart = lazy(() => import("@/components/risk-trend-chart"));
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  head: () => ({ meta: [{ title: "Dashboard — FraudShield AI" }, { name: "description", content: "Your protection overview and recent analyses." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Dashboard — FraudShield AI" }, { property: "og:description", content: "Your protection overview and recent analyses." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Dashboard — FraudShield AI" }, { name: "description", content: "Your protection overview and recent analyses." }] }),
   component: Dashboard,
 });
 

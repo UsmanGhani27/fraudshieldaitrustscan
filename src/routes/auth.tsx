@@ -7,6 +7,8 @@ export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { redirect?: string } => { const r = safeReturnPath(s["redirect"]); return r ? { redirect: r } : {}; },
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Sign in — FraudShield AI" },
       { name: "description", content: "Sign in to FraudShield AI to analyze suspicious content and review your history." },
       { property: "og:title", content: "Sign in — FraudShield AI" },

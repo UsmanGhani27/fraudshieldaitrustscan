@@ -5,6 +5,8 @@ import { PublicLayout } from "@/components/site-chrome";
 export const Route = createFileRoute("/safety")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Security & Privacy — FraudShield AI" },
       { name: "description", content: "What FraudShield AI processes, what it stores, your retention and deletion controls, and the limits of automated analysis." },
       { property: "og:title", content: "Security & Privacy — FraudShield AI" },

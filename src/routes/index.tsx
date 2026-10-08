@@ -9,6 +9,8 @@ import { Disclaimer } from "@/components/brand";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "FraudShield AI — Understand suspicious messages. Verify what's real." },
       { name: "description", content: "Analyze suspicious messages, emails, links, and screenshots for phishing, impersonation, and fraud signals — with clear explanations and safer next steps." },
       { property: "og:title", content: "FraudShield AI — Understand suspicious messages. Verify what's real. Act safely." },
@@ -57,7 +59,7 @@ const INPUTS = [
 
 const STEPS = [
   { icon: Inbox, t: "Input", d: "Paste a message, email, link, or upload a screenshot." },
-  { icon: ScanSearch, t: "Analyze", d: "AI checks for phishing, impersonation and fraud signals." },
+  { icon: ScanSearch, t: "Analyze", d: "Rule checks look for fraud signals; AI supplements them when available." },
   { icon: Lightbulb, t: "Explain", d: "See evidence and why each signal matters." },
   { icon: ListChecks, t: "Verify", d: "Follow a checklist to confirm independently." },
   { icon: ShieldCheck, t: "Act", d: "Take safer next steps with confidence." },

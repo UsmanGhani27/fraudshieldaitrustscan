@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/alerts")({
-  head: () => ({ meta: [{ title: "Alerts — FraudShield AI" }, { name: "description", content: "Notifications about high-risk results and usage." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Alerts — FraudShield AI" }, { property: "og:description", content: "Notifications about high-risk results and usage." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Alerts — FraudShield AI" }, { name: "description", content: "Notifications about high-risk results and usage." }] }),
   component: AlertsPage,
 });
 

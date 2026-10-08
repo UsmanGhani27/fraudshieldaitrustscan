@@ -10,7 +10,7 @@ import { CATEGORY_INFO, INPUT_LABEL, RISK_LABEL, isThreatCategory, type InputTyp
 import { redactSecrets } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/report/$id")({
-  head: () => ({ meta: [{ title: "Security report — FraudShield AI" }, { name: "description", content: "Printable security report." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Security report — FraudShield AI" }, { property: "og:description", content: "Printable security report." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Security report — FraudShield AI" }, { name: "description", content: "Printable security report." }] }),
   component: ReportPage,
 });
 

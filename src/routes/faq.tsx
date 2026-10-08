@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 export const Route = createFileRoute("/faq")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "FAQ — FraudShield AI" },
       { name: "description", content: "Answers about how FraudShield AI analyzes scams, what it can't do, and how your data is handled." },
       { property: "og:title", content: "FraudShield AI — Frequently asked questions" },

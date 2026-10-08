@@ -8,6 +8,8 @@ import { RiskBadge } from "@/components/brand";
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "How it works — FraudShield AI" },
       { name: "description", content: "Input, analyze, explain, verify, act: how FraudShield AI assesses suspicious content and how its risk score works." },
       { property: "og:title", content: "How FraudShield AI works" },

@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RiskLevel } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/reports")({
-  head: () => ({ meta: [{ title: "Saved reports — FraudShield AI" }, { name: "description", content: "Your exported security reports." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Saved reports — FraudShield AI" }, { property: "og:description", content: "Your exported security reports." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Saved reports — FraudShield AI" }, { name: "description", content: "Your exported security reports." }] }),
   component: ReportsPage,
 });
 

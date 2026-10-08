@@ -22,7 +22,7 @@ const searchSchema = z.object({ type: z.enum(["message", "email", "url", "screen
 
 export const Route = createFileRoute("/_authenticated/analyze")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Analyze — FraudShield AI" }, { name: "description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Analyze — FraudShield AI" }, { property: "og:description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Analyze — FraudShield AI" }, { name: "description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }] }),
   component: Analyze,
 });
 

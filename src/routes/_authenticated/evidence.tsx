@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PLAN_HISTORY_DAYS, INPUT_LABEL, type InputType, type PlanCode, type RiskLevel } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/evidence")({
-  head: () => ({ meta: [{ title: "Evidence vault — FraudShield AI" }, { name: "description", content: "Your privately stored screenshots and QR images." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Evidence vault — FraudShield AI" }, { property: "og:description", content: "Your privately stored screenshots and QR images." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Evidence vault — FraudShield AI" }, { name: "description", content: "Your privately stored screenshots and QR images." }] }),
   component: EvidencePage,
 });
 
