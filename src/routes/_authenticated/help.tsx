@@ -5,7 +5,7 @@ import { FaqList } from "@/components/faq-list";
 import { CATEGORY_INFO, THREAT_CATEGORIES } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/help")({
-  head: () => ({ meta: [{ title: "Help — FraudShield AI" }, { name: "description", content: "How to use FraudShield AI and what to do if you've been scammed." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Help — FraudShield AI" }, { property: "og:description", content: "How to use FraudShield AI and what to do if you've been scammed." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Help — FraudShield AI" }, { name: "description", content: "How to use FraudShield AI and what to do if you've been scammed." }] }),
   component: Help,
 });
 

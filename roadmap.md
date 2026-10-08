@@ -34,3 +34,9 @@
 - [x] Auth UX: return path, forgot/reset password, resend confirmation, clearer errors
 - [x] Demo results labelled synthetic
 - [x] Visual scan of all pages desktop + mobile; security re-checks
+
+## Phase 5 — Honesty / cleanup only
+- [x] Check hosted Google settings and honest sign-in presentation (enabled; hidden pending complete OAuth verification)
+- [x] Audit fallback/image refusal and product claims; fix real issues
+- [x] Run regression tests, route smoke and source scans; review harness checks (22 tests; 14 pages × 2 widths; build OK; standalone typecheck not executed)
+- [x] Report evidence and blockers; stop in preview awaiting restored-credit verification

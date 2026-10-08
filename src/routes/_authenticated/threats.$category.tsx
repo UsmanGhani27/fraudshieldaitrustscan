@@ -8,7 +8,7 @@ import { analysesListQuery } from "@/lib/queries";
 import { CATEGORY_INFO, isThreatCategory } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/threats/$category")({
-  head: () => ({ meta: [{ title: "Threat detail — FraudShield AI" }, { name: "description", content: "Learn about a threat category and see related analyses." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Threat detail — FraudShield AI" }, { property: "og:description", content: "Learn about a threat category and see related analyses." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Threat detail — FraudShield AI" }, { name: "description", content: "Learn about a threat category and see related analyses." }] }),
   component: ThreatDetail,
 });
 

@@ -55,6 +55,17 @@ describe("url analysis", () => {
 });
 
 describe("risk engine", () => {
+  it("labels text, email and URL fallback without claiming AI findings", () => {
+    for (const type of ["message", "email", "url"] as const) {
+      const a = assess({ type, text: "Account locked. Verify now at https://chase-secure-verify.co/login", claimedBrand: "Chase" }, null);
+      expect(a.scoring.model_score).toBeNull();
+      expect(a.scoring.method).toContain("rules-only");
+      expect(a.summary).toContain("AI analysis was unavailable");
+      expect(a.signals.every((s) => s.source === "rules" || s.source === "url")).toBe(true);
+      expect(a.suspicious_entities).toEqual([]);
+      expect(a.limitations.join(" ")).not.toContain("AI-assisted assessment");
+    }
+  });
   it("detects impersonation without a model", () => {
     const a = assess({ type: "message", text: "Chase: account locked. Verify now at https://chase-secure-verify.co/login", claimedBrand: "Chase" }, null);
     expect(a.verification.status).toBe("high_risk_impersonation");

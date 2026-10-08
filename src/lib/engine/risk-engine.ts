@@ -212,7 +212,7 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
     limitations: Array.from(new Set([
       ...(model?.limitations ?? []),
       ...(model ? [] : ["AI analysis was unavailable; this result comes from deterministic rules only. Re-run later for a fuller assessment."]),
-      "Automated, AI-assisted assessment. It can be wrong and does not use live threat-intelligence feeds or visit links.",
+      `Automated ${model ? "AI-assisted" : "rule-only"} assessment. It can be wrong and does not use live threat-intelligence feeds or visit links.`,
     ])).slice(0, 6),
     safe_to_proceed: level === "low" && verification.status !== "suspicious" && verification.status !== "high_risk_impersonation",
     scoring: { model_score: model?.risk_score ?? null, rules_score: rules, final, method },

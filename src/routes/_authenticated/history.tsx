@@ -11,7 +11,7 @@ import { analysesListQuery } from "@/lib/queries";
 import { CATEGORY_INFO, INPUT_LABEL, RISK_LABEL, THREAT_CATEGORIES } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/history")({
-  head: () => ({ meta: [{ title: "History — FraudShield AI" }, { name: "description", content: "Search and filter your past analyses." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "History — FraudShield AI" }, { property: "og:description", content: "Search and filter your past analyses." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "History — FraudShield AI" }, { name: "description", content: "Search and filter your past analyses." }] }),
   component: HistoryPage,
 });
 

@@ -19,7 +19,7 @@ import { PLANNED_INTEGRATIONS } from "@/lib/providers/types";
 import { PLAN_HISTORY_DAYS, type PlanCode } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/settings")({
-  head: () => ({ meta: [{ title: "Settings — FraudShield AI" }, { name: "description", content: "Profile, privacy and account settings." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Settings — FraudShield AI" }, { property: "og:description", content: "Profile, privacy and account settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Settings — FraudShield AI" }, { name: "description", content: "Profile, privacy and account settings." }] }),
   component: Settings,
 });
 

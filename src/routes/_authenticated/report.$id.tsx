@@ -10,7 +10,7 @@ import { CATEGORY_INFO, INPUT_LABEL, RISK_LABEL, isThreatCategory, type InputTyp
 import { redactSecrets } from "@/lib/validation";
 
 export const Route = createFileRoute("/_authenticated/report/$id")({
-  head: () => ({ meta: [{ title: "Security report — FraudShield AI" }, { name: "description", content: "Printable security report." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Security report — FraudShield AI" }, { property: "og:description", content: "Printable security report." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Security report — FraudShield AI" }, { name: "description", content: "Printable security report." }] }),
   component: ReportPage,
 });
 
@@ -28,6 +28,7 @@ function ReportPage() {
   if (!report || !a) return <EmptyState icon={FileX2} title="Report unavailable" description="This report or its analysis was deleted." action={<Button asChild variant="hero"><Link to="/reports">Back to reports</Link></Button>} />;
 
   const d = toResultData(a);
+  const method = d.provider === "fraudshield-rules" ? "Rule-only assessment (AI unavailable)" : "AI-assisted assessment";
   const r = (s: string) => redactSecrets(s);
   const primary = d.primary_threat && isThreatCategory(d.primary_threat) ? CATEGORY_INFO[d.primary_threat].label : null;
   const cats = d.categories.filter(isThreatCategory).map((c) => CATEGORY_INFO[c].label);
@@ -37,14 +38,14 @@ function ReportPage() {
     const lines = [
       "FRAUDSHIELD AI — SECURITY REPORT", "",
       `Report ID: ${report.id}`, `Analysis ID: ${a.id}`, `Input type: ${INPUT_LABEL[a.input_type as InputType]}`, `Analyzed: ${new Date(a.created_at).toLocaleString()}`, `Generated: ${new Date(report.generated_at).toLocaleString()}`,
-      `Risk: ${RISK_LABEL[d.risk_level]} (${d.risk_score}/100)`, `Confidence: ${d.confidence}%`, "",
+      `Risk: ${RISK_LABEL[d.risk_level]} (${d.risk_score}/100)`, `Confidence: ${d.confidence}%`, `Method: ${method}`, "",
       "SUMMARY", r(d.summary), "", "THREATS", `Primary: ${primary ?? "None"}`, `All: ${cats.join(", ") || "None"}`, "",
       "WHY FLAGGED", ...d.signals.map((s) => `- [${s.severity.toUpperCase()}] ${r(s.title)}: ${r(s.explanation)} Evidence: ${r(s.evidence)}`), "",
       "IDENTITY VERIFICATION", v ? `${VLABEL[v.status]} — claims: ${v.claimed || "n/a"}; observed domain: ${v.observed_domain || "n/a"}. ${v.reason}` : "n/a", "",
       "RECOMMENDED ACTIONS", ...d.actions.map((x, i) => `${i + 1}. ${r(x)}`), "",
       "WHAT NOT TO DO", ...d.do_not_do.map((x) => `- ${r(x)}`), "",
       "VERIFICATION STEPS", ...d.steps.map((x) => `[ ] ${r(x)}`), "",
-      "LIMITATIONS", ...d.limitations.map(r), "This is an automated, AI-assisted assessment — not a guarantee of safety. Verify independently through official channels.",
+      "LIMITATIONS", ...d.limitations.map(r), `${method} — not a guarantee of safety. Verify independently through official channels.`,
     ];
     const blob = new Blob([lines.join("\n")], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -71,7 +72,7 @@ function ReportPage() {
         </header>
         <div className="print-avoid mt-5 flex flex-wrap items-center gap-3">
           <span className="risk-chip rounded-full border border-border px-3 py-1 text-sm font-semibold">{RISK_LABEL[d.risk_level]} risk · {d.risk_score}/100</span>
-          <span className="text-xs text-muted-foreground">Confidence {d.confidence}% · AI-assisted assessment, not a guarantee</span>
+          <span className="text-xs text-muted-foreground">Confidence {d.confidence}% · {method}, not a guarantee</span>
         </div>
         <dl className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {[["Analysis ID", a.id.slice(0, 8)], ["Input type", INPUT_LABEL[a.input_type as InputType]], ["Analyzed", new Date(a.created_at).toLocaleString()], ["Risk", `${RISK_LABEL[d.risk_level]} · ${d.risk_score}/100`], ["Confidence", `${d.confidence}%`], ["Primary threat", primary ?? "None"]].map(([k, val]) => (
@@ -89,7 +90,7 @@ function ReportPage() {
         <H>Verification steps</H>
         <ul className="mt-2 space-y-1">{d.steps.map((x, i) => <li key={i}>☐ {r(x)}</li>)}</ul>
         <footer className="mt-8 border-t border-border pt-4 text-xs text-muted-foreground">
-          <div className="mb-2 flex flex-wrap justify-between gap-2"><span>FraudShield AI · Report {report.id.slice(0, 8)}</span><span>Generated {new Date(report.generated_at).toLocaleString()}</span></div><strong>Limitations:</strong> {d.limitations.map(r).join(" ")} This report contains no raw submitted content. It is an automated, AI-assisted assessment — not a guarantee of safety. Verify independently through official channels.
+          <div className="mb-2 flex flex-wrap justify-between gap-2"><span>FraudShield AI · Report {report.id.slice(0, 8)}</span><span>Generated {new Date(report.generated_at).toLocaleString()}</span></div><strong>Limitations:</strong> {d.limitations.map(r).join(" ")} This report omits the full submission but may contain short redacted evidence quotes. {method} — not a guarantee of safety. Verify independently through official channels.
         </footer>
       </article>
     </div>

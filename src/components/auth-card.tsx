@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, MailCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { Logo } from "./brand";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { useAuth } from "@/hooks/use-auth";
-import { rememberReturnPath } from "@/lib/return-path";
 
 export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" | "signup"; onDone: () => void; footer: React.ReactNode; returnPath?: string | undefined }) {
   const { user } = useAuth();
@@ -70,12 +68,6 @@ export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" 
     setInfo("If an account exists for this email, a password reset link is on its way.");
   };
 
-  const google = async () => {
-    rememberReturnPath(returnPath);
-    const result = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/auth" });
-    if (result.error) toast.error("Google sign-in failed. Please try again.");
-  };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-glow px-4 py-10">
       <div className="w-full max-w-sm">
@@ -96,12 +88,8 @@ export function AuthCard({ mode, onDone, footer, returnPath }: { mode: "signin" 
             <>
               <h1 className="text-xl font-semibold">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
               <p className="mt-1 text-sm text-muted-foreground">{mode === "signup" ? "Free plan includes 10 analyses per month." : "Sign in to continue analyzing."}</p>
-              <Button type="button" variant="outline" className="mt-6 w-full" onClick={google}>
-                <svg viewBox="0 0 24 24" className="size-4" aria-hidden><path fill="currentColor" d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.66 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.95S8.78 6.28 12 6.28c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.72 14.55 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.83-3.73 8.83-8.99 0-.6-.07-1.06-.15-1.51z" /></svg>
-                Continue with Google
-              </Button>
-              <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><div className="h-px flex-1 bg-border" />or<div className="h-px flex-1 bg-border" /></div>
-              <form onSubmit={submit} className="space-y-4">
+              {/* Google is hosted-enabled, but hidden until its complete sign-in flow is verified. */}
+              <form onSubmit={submit} className="mt-6 space-y-4">
                 {mode === "signup" && (
                   <div className="space-y-1.5"><Label htmlFor="name">Name (optional)</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} autoComplete="name" /></div>
                 )}

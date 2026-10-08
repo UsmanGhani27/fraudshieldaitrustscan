@@ -9,7 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { profileQuery } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/billing")({
-  head: () => ({ meta: [{ title: "Plan & usage — FraudShield AI" }, { name: "description", content: "Your plan, monthly usage and available upgrades." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Plan & usage — FraudShield AI" }, { property: "og:description", content: "Your plan, monthly usage and available upgrades." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Plan & usage — FraudShield AI" }, { name: "description", content: "Your plan, monthly usage and available upgrades." }] }),
   component: Billing,
 });
 

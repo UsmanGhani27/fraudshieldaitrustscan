@@ -22,7 +22,7 @@ const searchSchema = z.object({ type: z.enum(["message", "email", "url", "screen
 
 export const Route = createFileRoute("/_authenticated/analyze")({
   validateSearch: searchSchema,
-  head: () => ({ meta: [{ title: "Analyze — FraudShield AI" }, { name: "description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Analyze — FraudShield AI" }, { property: "og:description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Analyze — FraudShield AI" }, { name: "description", content: "Analyze a suspicious message, email, link, screenshot or QR code." }] }),
   component: Analyze,
 });
 
@@ -39,7 +39,7 @@ const PROCESSED: Record<InputType, string> = {
   email: "Sender, reply-to, subject, body, claimed company and attachment names. Attachments themselves aren't uploaded.",
   url: "Only the link text. We never visit, open or download the page.",
   screenshot: "The image you upload and any context you add. With history on, it's stored privately so you can view or delete it later.",
-  qr: "The QR image is decoded on your device. Only the decoded link is sent for analysis — we never open it.",
+  qr: "We try to decode the QR image on your device. For a valid web link, only the link is sent — never opened. Otherwise the image is sent for AI analysis, which requires AI availability.",
 };
 
 const STAGES = ["Reading input", "Checking signals", "Building risk assessment", "Preparing recommendations"];
@@ -140,13 +140,13 @@ function Analyze() {
           attachments: type === "email" ? f.attachments || undefined : undefined,
           claimedBrand: f.brand || undefined,
           context: f.context || undefined,
-          url: type === "url" ? f.url : useQrUrl ? qrUrl! : undefined,
+          url: type === "url" ? f.url : useQrUrl ? qrUrl ?? undefined : undefined,
           image: isImage && file && !useQrUrl ? { mime: file.mime, base64: file.base64 } : undefined,
         },
       });
       if (!res.ok) {
         setFailure(res);
-        if (res.code === "LIMIT_REACHED") qc.invalidateQueries({ queryKey: ["usage"] });
+        if (res.code === "LIMIT_REACHED" || res.code === "AI_UNAVAILABLE") qc.invalidateQueries({ queryKey: ["usage"] });
         return;
       }
       qc.invalidateQueries({ queryKey: ["usage"] });
@@ -287,7 +287,7 @@ function Analyze() {
                         <p className="mt-1 break-all font-mono text-xs">{qrUrl}</p>
                         {!validateUrl(qrUrl ?? "").ok && <p className="mt-1 text-xs text-risk-medium">This isn't a web link, so the image will be analyzed instead.</p>}
                       </>}
-                      {qrState === "none" && <p>We couldn't decode a QR code in this image. You can still analyze it — the AI will look at the image instead, with lower confidence.</p>}
+                      {qrState === "none" && <p>We couldn't decode a QR code in this image. Image analysis requires AI availability; if unavailable, the check is refused without using an analysis slot.</p>}
                     </div>
                   )}
                   {type === "screenshot" && <div className="space-y-1.5"><Label htmlFor="ctx">Context (optional)</Label><Input id="ctx" value={f.context} onChange={set("context")} maxLength={500} placeholder="Where did you see this?" /></div>}
@@ -338,7 +338,7 @@ function Analyze() {
             <p className="mt-2 text-sm text-muted-foreground">Don't include passwords, recovery codes or full card numbers. Common password-like strings and long numbers are redacted automatically before analysis and storage.</p>
           </div>
           <div className="rounded-xl border border-border bg-card p-5 text-xs text-muted-foreground">
-            Results are AI-assisted and can be wrong. Always verify through official channels before acting. Control what's saved in <Link to="/settings" className="text-primary hover:underline">Settings</Link>.
+            When available, AI supplements rule checks. Otherwise text, email and links receive a labeled rule-only result; image-only checks are refused without using a slot. Any assessment can be wrong. Verify through official channels. Control what's saved in <Link to="/settings" className="text-primary hover:underline">Settings</Link>.
           </div>
         </aside>
       </div>

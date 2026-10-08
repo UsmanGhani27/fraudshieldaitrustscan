@@ -15,7 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { INPUT_LABEL, type InputType } from "@/lib/risk";
 
 export const Route = createFileRoute("/_authenticated/analysis/$id")({
-  head: () => ({ meta: [{ title: "Analysis result — FraudShield AI" }, { name: "description", content: "Explained threat assessment with safe next steps." }] }),
+  head: () => ({ meta: [{ property: "og:title", content: "Analysis result — FraudShield AI" }, { property: "og:description", content: "Explained threat assessment with safe next steps." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary_large_image" }, { title: "Analysis result — FraudShield AI" }, { name: "description", content: "Explained threat assessment with safe next steps." }] }),
   component: AnalysisPage,
 });
 

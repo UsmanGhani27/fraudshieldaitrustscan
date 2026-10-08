@@ -7,6 +7,8 @@ import { EarlyAccessButton } from "@/components/early-access";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { title: "Pricing — FraudShield AI" },
       { name: "description", content: "Free, Personal, Pro, Team and Business plans for FraudShield AI scam and phishing analysis." },
       { property: "og:title", content: "FraudShield AI pricing" },
