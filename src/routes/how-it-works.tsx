@@ -19,7 +19,7 @@ export const Route = createFileRoute("/how-it-works")({
 
 const STEPS = [
   { icon: Inbox, t: "1. Input", d: "Choose an analyzer — message, email, URL, screenshot or QR (preview). Add the sender and claimed brand if you have them. We show exactly what will be processed." },
-  { icon: ScanSearch, t: "2. Analyze", d: "Your input is normalized, password-like strings and card numbers are redacted, deterministic checks look for known scam patterns and look-alike domains, and an AI model assesses the content. Links are never opened; QR codes are decoded on your device. If AI is unavailable, a clearly labeled rule-only result is shown." },
+  { icon: ScanSearch, t: "2. Analyze", d: "Text is normalized and common secrets are redacted. Rule checks look for scam patterns and look-alike domains; AI supplements them when available. Links are never opened. We try to decode QR codes on your device, sending the image for AI assessment only if no valid web link is decoded. Without AI, text, email and links receive labeled rule-only results; image-only checks are refused without using a slot." },
   { icon: Lightbulb, t: "3. Explain", d: "You get a risk score, confidence, threat categories and signal cards that quote the evidence and explain why it matters." },
   { icon: ListChecks, t: "4. Verify", d: "Compare the claimed identity with observed indicators, then work through a verification checklist using official channels." },
   { icon: ShieldCheck, t: "5. Act", d: "Follow recommended safe actions, save the result, or export a printable security report." },
