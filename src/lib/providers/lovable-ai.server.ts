@@ -5,7 +5,7 @@ const MODEL = "openai/gpt-6-astra";
 const BASE = "https://ai.gateway.lovable.dev/v1/responses";
 
 export class ProviderError extends Error {
-  constructor(public code: "unconfigured" | "rate_limited" | "credits" | "denied" | "bad_request" | "upstream" | "empty" | "refused") {
+  constructor(public code: "unconfigured" | "rate_limited" | "credits" | "denied" | "bad_request" | "upstream" | "empty" | "refused" | "timeout" | "malformed" | "unsupported") {
     super(code);
   }
 }
@@ -70,6 +70,6 @@ export const lovableAiProvider: AnalysisProvider = {
     }
     const text = await readStream(res);
     if (!text.trim()) throw new ProviderError("empty");
-    return JSON.parse(text);
+    try { return JSON.parse(text); } catch { throw new ProviderError("malformed"); }
   },
 };

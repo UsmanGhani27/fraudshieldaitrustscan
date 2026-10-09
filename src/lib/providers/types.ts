@@ -19,6 +19,8 @@ export interface NormalizedInput {
 export interface AnalysisProvider {
   id: string;
   model: string;
+  /** false = text-only; the chain never sends image input to it. */
+  supportsImages?: boolean;
   isAvailable(): boolean;
   analyze(input: NormalizedInput): Promise<unknown>;
 }
