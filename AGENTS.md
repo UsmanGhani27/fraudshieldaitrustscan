@@ -15,3 +15,4 @@
 - Retention runs hourly in the database (`purge_expired_analyses` via pg_cron); image files can't be deleted from SQL, so paths are queued in `pending_storage_deletions` and removed by the server on app activity.
 - Keep unverified social sign-in entry points out of AuthCard even when the hosted provider is enabled; configuration alone does not prove the end-to-end flow works.
 - Derive report assessment labels from the saved provider, including plain-text downloads; fallback results must not be presented as AI-produced.
+- Normalize URL verdicts in the risk engine against retained warning severity and replace unsupported lookup advice before saving, so results and reports share the same honest assessment.
