@@ -11,6 +11,8 @@ Rules:
 - Every item in why_flagged must quote short evidence copied exactly from the input and explain why it matters in plain language.
 - Name social-engineering tactics concretely (e.g. Urgency, Fear, Authority, Reward bait, Isolation, Credential request, Payment request).
 - Compare the claimed sender/brand with observed domains, numbers and payment methods.
+- URLs are inspected as text only: no browsing, live phishing/reputation database queries, domain-age checks or threat-intelligence lookups are performed. Do not claim or recommend these as performed checks.
+- A domain absent from the built-in brand list is unverified, not evidence that it is new or malicious. Keep warning severity consistent with the risk score.
 - NEVER tell the user to verify by clicking a link, scanning a code, replying, or calling a number contained in the content. Recommend opening the official app/site independently or using a trusted contact method.
 - do_not_do lists concrete things the user should avoid.
 - Deterministic findings are provided; consider them but judge independently.

@@ -40,3 +40,8 @@
 - [x] Audit fallback/image refusal and product claims; fix real issues
 - [x] Run regression tests, route smoke and source scans; review harness checks (22 tests; 14 pages × 2 widths; build OK; standalone typecheck not executed)
 - [x] Report evidence and blockers; stop in preview awaiting restored-credit verification
+
+## Targeted URL consistency and honesty
+- [ ] Align URL score, warning severity and summary; exclude unsupported reputation/age claims
+- [ ] Replace lookup-implying recommendations with text-only verification wording
+- [ ] Add regressions, run relevant/full tests and review automatic build/typecheck evidence

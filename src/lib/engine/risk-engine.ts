@@ -81,6 +81,9 @@ const DO_NOT = [
 const UNSAFE_ADVICE = /\b(click|tap|follow|open|visit|use) (on )?(the|this|that) (link|url|button)\b|\b(call|text|contact|reply to) (the|this) (number|sender|phone)\b|\bnumber (provided|listed|given|in the (message|email))\b|\breply to (this|the) (message|email|text)\b|\bscan (the|this) (qr|code)\b(?! with caution)|\blink provided\b/i;
 const URLISH = /(https?:\/\/|www\.)\S+|\b[a-z0-9-]+\.(com|net|org|co|io|info|biz|xyz|top|online|site|app)\b/gi;
 const PHONEISH = /\+?\d[\d\s().-]{7,}\d/g;
+// These require external data we do not collect; absence from our brand list is not a threat signal.
+const UNSUPPORTED_URL_CLAIM = /\b(new(?:ly)?[ -](?:and[ -]unverified[ -])?(?:domain|registered)|recently[ -]registered|domain age|unverified domain|(?:phishing|reputation|threat(?:[ -]intelligence)?|blacklist|blocklist|denylist)[ -]*(?:databases?|feeds?|lookups?)|(?:blacklisted|blocklisted))\b/i;
+const TEXT_ONLY_CHECKS = "This assessment checked the URL text and compared any recognized brand with our built-in domain list only; no live reputation databases were queried and the destination was not visited.";
 
 export function assess(input: EngineInput, model: ModelOutput | null): FinalAssessment {
   const corpus = [input.text, input.sender, input.replyTo, input.url].filter(Boolean).join("\n");
@@ -134,6 +137,7 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
   const modelEvidence = (model?.why_flagged ?? []).map((s) => s.evidence.toLowerCase()).join(" | ");
   const freshRuleSignals = ruleSignals.filter((s, i) => !modelEvidence.includes((hits[i]?.match ?? "").toLowerCase()));
   const signals = [...(model?.why_flagged ?? []), ...urlSignals, ...freshRuleSignals].filter((s) => {
+    if (input.type === "url" && s.source === "model" && UNSUPPORTED_URL_CLAIM.test(`${s.title} ${s.explanation}`)) return false;
     const k = s.title.toLowerCase().slice(0, 40);
     if (seen.has(k)) return false;
     seen.add(k);
@@ -165,6 +169,11 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
     method = "rules-only (AI unavailable)";
   }
   if (verification.status === "high_risk_impersonation") final = Math.max(final, ENGINE_WEIGHTS.impersonationFloor);
+  // URL warnings must not be paired with a lower overall verdict or an all-clear banner.
+  if (input.type === "url") {
+    const warningFloor = signals.some((s) => s.severity === "high") ? 50 : signals.some((s) => s.severity === "medium") ? 25 : 0;
+    final = Math.max(final, warningFloor);
+  }
   final = Math.max(0, Math.min(100, final));
 
   // Evidence quality: more corroborating signals → higher confidence.
@@ -178,7 +187,7 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
   // Drop model advice that points at contact details (links, domains, phone numbers) taken from the suspicious content.
   const inputContacts = new Set([...(corpus.match(URLISH) ?? []), ...(corpus.match(PHONEISH) ?? [])].map((x) => x.toLowerCase().replace(/[^a-z0-9.]/g, "")).filter((x) => x.length >= 6));
   const reusesContact = (x: string) => [...(x.match(URLISH) ?? []), ...(x.match(PHONEISH) ?? [])].some((c) => inputContacts.has(c.toLowerCase().replace(/[^a-z0-9.]/g, "")));
-  const filterUnsafe = (l: string[]) => l.filter((x) => !UNSAFE_ADVICE.test(x) && !reusesContact(x));
+  const filterUnsafe = (l: string[]) => l.filter((x) => !UNSAFE_ADVICE.test(x) && !reusesContact(x)).map((x) => UNSUPPORTED_URL_CLAIM.test(x) ? TEXT_ONLY_CHECKS : x);
   const merge = (a: string[], b: string[], n: number) => Array.from(new Set([...filterUnsafe(a), ...b])).slice(0, n);
 
   const observed = [
@@ -187,7 +196,9 @@ export function assess(input: EngineInput, model: ModelOutput | null): FinalAsse
     ...urlAnalyses.map((u) => `Link domain: ${u.registrable_domain}`),
   ];
 
-  const summary = model?.summary
+  const summary = input.type === "url"
+    ? `${level === "low" ? "Low estimated URL risk" : `${level[0]?.toUpperCase()}${level.slice(1)} estimated URL risk`}: ${signals.length ? `${signals.length} warning sign${signals.length === 1 ? "" : "s"} identified in the submitted text.` : "No specific warning signs identified in the submitted text."} ${model ? "AI-assisted text assessment" : "Rule-only assessment; AI analysis was unavailable"}. The destination and its reputation have not been checked; verify independently.`
+    : model?.summary
     ?? (hits.length || urlSignals.length
       ? `Our rule-based checks found ${hits.length + urlSignals.length} warning sign${hits.length + urlSignals.length === 1 ? "" : "s"}. AI analysis was unavailable, so this assessment is less nuanced than usual.`
       : "Our rule-based checks didn't find common scam patterns. AI analysis was unavailable, so subtle threats may be missed.");

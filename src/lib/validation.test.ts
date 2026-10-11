@@ -55,6 +55,40 @@ describe("url analysis", () => {
 });
 
 describe("risk engine", () => {
+  it.each([["medium", 25], ["high", 50]] as const)("aligns URL %s warnings with the final verdict", (severity, floor) => {
+    const model = sanitizeModelOutput({ risk_score: 16, confidence: 60, summary: "No major warning signs", why_flagged: [{ title: "Suspicious URL text", severity, evidence: "example.org", explanation: "Potentially misleading URL wording." }] });
+    const a = assess({ type: "url", text: "https://example.org", url: "https://example.org" }, model);
+    expect(a.risk_score).toBeGreaterThanOrEqual(floor);
+    expect(a.risk_level).toBe(scoreToLevel(a.risk_score));
+    expect(a.scoring.final).toBe(a.risk_score);
+    expect(a.safe_to_proceed).toBe(false);
+    expect(a.summary).not.toContain("No major warning signs");
+    expect(a.summary.toLowerCase()).toContain(`${a.risk_level} estimated URL risk`);
+  });
+  it("does not treat unknown domain age or missing brand data as a URL warning", () => {
+    const model = sanitizeModelOutput({ risk_score: 16, confidence: 60, summary: "Potential red flag", claimed_identity: "Example", why_flagged: [{ title: "New and Unverified Domain", severity: "medium", explanation: "New domain is a potential red flag." }] });
+    const a = assess({ type: "url", text: "https://example.org", url: "https://example.org" }, model);
+    expect(a.signals).toEqual([]);
+    expect(a.risk_level).toBe("low");
+    expect(a.verification.status).toBe("unverified");
+    expect(a.summary).not.toContain("Potential red flag");
+  });
+  it("keeps deterministic URL warnings consistent without AI", () => {
+    const a = assess({ type: "url", text: "https://bit.ly/sample", url: "https://bit.ly/sample" }, null);
+    expect(a.signals.some((s) => s.severity === "medium")).toBe(true);
+    expect(a.risk_level).toBe("medium");
+    expect(a.safe_to_proceed).toBe(false);
+    expect(a.summary).toContain("AI analysis was unavailable");
+  });
+  it("replaces live database advice with an accurate account of text-only checks", () => {
+    const model = sanitizeModelOutput({ risk_score: 16, confidence: 60, summary: "s", recommended_actions: ["Check if the URL is listed in any phishing databases", "Open the official app independently"], verification_steps: ["Check live threat intelligence feeds"], do_not_do: ["Trust reputation database lookups"] });
+    const a = assess({ type: "url", text: "https://example.org", url: "https://example.org" }, model);
+    for (const list of [a.recommended_actions, a.verification_steps, a.do_not_do]) {
+      expect(list.join(" ")).toContain("no live reputation databases were queried");
+      expect(list.join(" ")).not.toMatch(/Check if|Check live|Trust reputation/);
+    }
+    expect(a.recommended_actions).toContain("Open the official app independently");
+  });
   it("labels text, email and URL fallback without claiming AI findings", () => {
     for (const type of ["message", "email", "url"] as const) {
       const a = assess({ type, text: "Account locked. Verify now at https://chase-secure-verify.co/login", claimedBrand: "Chase" }, null);
